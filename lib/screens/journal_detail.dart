@@ -1,16 +1,14 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/journal_entry.dart';
+import '../utils/theme.dart';
+import 'journal_screen.dart'; // ✅ Import this to navigate to Edit
 
 class JournalDetailScreen extends StatefulWidget {
   final JournalEntry entry;
 
-  const JournalDetailScreen({
-    required this.entry,
-    Key? key,
-  }) : super(key: key);
+  const JournalDetailScreen({required this.entry, Key? key}) : super(key: key);
 
   @override
   State<JournalDetailScreen> createState() => _JournalDetailScreenState();
@@ -19,19 +17,17 @@ class JournalDetailScreen extends StatefulWidget {
 class _JournalDetailScreenState extends State<JournalDetailScreen> {
   late final AudioPlayer _audioPlayer;
   bool _audioAvailable = false;
+  late List<JournalSticker> _stickers;
 
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
-
-    // Handle audio (local only for now)
-    if (widget.entry.audioPath != null &&
-        !widget.entry.audioPath!.startsWith('http') &&
-        File(widget.entry.audioPath!).existsSync()) {
+    if (widget.entry.audioPath != null && File(widget.entry.audioPath!).existsSync()) {
       _audioPlayer.setFilePath(widget.entry.audioPath!);
       _audioAvailable = true;
     }
+    _stickers = widget.entry.getStickers();
   }
 
   @override
@@ -40,134 +36,107 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
     super.dispose();
   }
 
-  // =========================
-  // IMAGE HANDLER (LOCAL + CLOUD)
-  // =========================
-  Widget _buildImage(String? path) {
-    if (path == null || path.isEmpty) {
-      return const SizedBox.shrink();
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = "${widget.entry.timestamp.day}/${widget.entry.timestamp.month}/${widget.entry.timestamp.year}";
+    
+    // Calculate Canvas Height
+    double maxStickerY = 0;
+    for (var s in _stickers) {
+      if (s.y > maxStickerY) maxStickerY = s.y;
     }
+    double requiredHeight = maxStickerY + 200;
 
-    // 🌐 Cloud image (Firebase Storage URL)
-    if (path.startsWith('http')) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.network(
-          path,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) =>
-              const Icon(Icons.broken_image, size: 48),
-        ),
-      );
-    }
-
-    // 📁 Local image fallback
-    final file = File(path);
-    if (!file.existsSync()) {
-      return const Icon(Icons.broken_image, size: 48);
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.file(file, fit: BoxFit.cover),
-    );
-  }
-
-  // =========================
-  // AUDIO PLAYER
-  // =========================
-  Widget _buildAudioPlayer() {
-    if (!_audioAvailable) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        margin: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Text(
-          "Audio file not found.",
-          style: TextStyle(color: Colors.red),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(8),
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          StreamBuilder<PlayerState>(
-            stream: _audioPlayer.playerStateStream,
-            builder: (context, snapshot) {
-              final playing = snapshot.data?.playing ?? false;
-              return IconButton(
-                icon: Icon(playing ? Icons.pause : Icons.play_arrow),
-                iconSize: 48,
-                onPressed: playing ? _audioPlayer.pause : _audioPlayer.play,
+    return Scaffold(
+      backgroundColor: AppTheme.oatMilk,
+      appBar: AppBar(
+        title: Text(dateStr, style: const TextStyle(color: AppTheme.espresso)),
+        backgroundColor: AppTheme.oatMilk,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppTheme.espresso),
+        actions: [
+          // ✅ EDIT BUTTON
+          IconButton(
+            icon: const Icon(Icons.edit, color: AppTheme.matchaGreen),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => JournalScreen(
+                    selectedDate: widget.entry.timestamp,
+                    emotion: widget.entry.emotion ?? "Neutral",
+                    existingEntry: widget.entry, // ✅ PASS THE ENTRY TO EDIT
+                  ),
+                ),
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.stop),
-            iconSize: 48,
-            onPressed: () {
-              _audioPlayer.stop();
-              _audioPlayer.seek(Duration.zero);
-            },
-          ),
+          const SizedBox(width: 10),
         ],
       ),
-    );
-  }
-
-  // =========================
-  // UI
-  // =========================
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Journal Detail")),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            if (widget.entry.imagePath != null)
-              _buildImage(widget.entry.imagePath),
-            const SizedBox(height: 16),
-            Text(
-              widget.entry.content.isEmpty
-                  ? "No text content."
-                  : widget.entry.content,
-              style: const TextStyle(fontSize: 16),
+            // Spacer for scroll height
+            Container(
+              height: requiredHeight < MediaQuery.of(context).size.height 
+                  ? MediaQuery.of(context).size.height 
+                  : requiredHeight,
+              width: double.infinity,
             ),
-            const SizedBox(height: 12),
-            Text(
-              "Mood: ${widget.entry.emotion ?? 'Not specified'}",
-              style: const TextStyle(fontWeight: FontWeight.w500),
+
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.entry.title ?? "Untitled",
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.espresso),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(color: AppTheme.matchaGreen, borderRadius: BorderRadius.circular(20)),
+                    child: Text(widget.entry.emotion ?? "Neutral", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    widget.entry.content,
+                    style: const TextStyle(fontSize: 16, height: 1.5, color: AppTheme.espresso),
+                  ),
+                  if (_audioAvailable) ...[
+                    const SizedBox(height: 20),
+                    IconButton(icon: const Icon(Icons.play_circle_fill, size: 40, color: AppTheme.matchaGreen), onPressed: _audioPlayer.play),
+                  ],
+                  if (widget.entry.imagePath != null) ...[
+                    const SizedBox(height: 20),
+                    ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.file(File(widget.entry.imagePath!))),
+                  ],
+                  const SizedBox(height: 100),
+                ],
+              ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              widget.entry.timestamp.toString(),
-              style: const TextStyle(color: Colors.grey),
-            ),
-            if (widget.entry.audioPath != null) _buildAudioPlayer(),
+
+            // Stickers
+            ..._stickers.map((sticker) {
+              return Positioned(
+                left: sticker.x,
+                top: sticker.y,
+                child: SizedBox(
+                  height: 120, width: 120,
+                  child: _isEmoji(sticker.path)
+                      ? Text(sticker.path, style: const TextStyle(fontSize: 80))
+                      : Image.asset(sticker.path),
+                ),
+              );
+            }).toList(),
           ],
         ),
       ),
     );
   }
+
+  bool _isEmoji(String text) => !text.startsWith('assets/');
 }

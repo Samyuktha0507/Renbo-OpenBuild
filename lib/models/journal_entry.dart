@@ -1,29 +1,16 @@
-import 'package:hive/hive.dart';
+import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // ✅ Needed for Timestamp
-import 'package:firebase_auth/firebase_auth.dart';
 
-part 'journal_entry.g.dart';
-
-@HiveType(typeId: 0)
-class JournalEntry extends HiveObject {
-  @HiveField(0)
+class JournalEntry {
   String id;
-
-  @HiveField(1)
   String content;
-
-  @HiveField(2)
   DateTime timestamp;
-
-  @HiveField(3)
   String? emotion;
-
-  @HiveField(4)
   String? imagePath;
-
-  @HiveField(5)
   String? audioPath;
+  String? title; // ✅ Added Title
+  String? stickersJson; // ✅ Added Stickers support
 
   JournalEntry({
     String? id,
@@ -32,38 +19,72 @@ class JournalEntry extends HiveObject {
     this.emotion,
     this.imagePath,
     this.audioPath,
+    this.title,
+    this.stickersJson,
   }) : id = id ?? const Uuid().v4();
 
-  String get getId => id;
+  // 🛠️ HELPER: Get the actual list of stickers
+  List<JournalSticker> getStickers() {
+    if (stickersJson == null) return [];
+    try {
+      final List<dynamic> decoded = jsonDecode(stickersJson!);
+      return decoded.map((e) => JournalSticker.fromMap(e)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
 
-  // =========================
-  // Firestore serialization
-  // =========================
-  Map<String, dynamic> toFirestore() {
+  // 🛠️ HELPER: Save the list back to string
+  void setStickers(List<JournalSticker> list) {
+    stickersJson = jsonEncode(list.map((e) => e.toMap()).toList());
+  }
+
+  // 🔥 FIRESTORE: Convert Object -> Map (For Saving)
+  Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'content': content,
-      'timestamp': Timestamp.fromDate(timestamp), // ✅ Firestore-native
+      'timestamp': Timestamp.fromDate(timestamp),
       'emotion': emotion,
       'imagePath': imagePath,
       'audioPath': audioPath,
-      'userId': FirebaseAuth.instance.currentUser?.uid,
+      'title': title,
+      'stickersJson': stickersJson,
     };
   }
 
-  // =========================
-  // Firestore deserialization
-  // =========================
-  factory JournalEntry.fromFirestore(
-    Map<String, dynamic> data,
-    String documentId,
-  ) {
+  // 🔥 FIRESTORE: Convert Map -> Object (For Loading)
+  factory JournalEntry.fromMap(Map<String, dynamic> map, String docId) {
     return JournalEntry(
-      id: documentId,
-      content: data['content'] ?? '',
-      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      emotion: data['emotion'],
-      imagePath: data['imagePath'],
-      audioPath: data['audioPath'],
+      id: docId,
+      content: map['content'] ?? '',
+      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      emotion: map['emotion'],
+      imagePath: map['imagePath'],
+      audioPath: map['audioPath'],
+      title: map['title'],
+      stickersJson: map['stickersJson'],
+    );
+  }
+}
+
+// ✅ STICKER CLASS (Required for the List<JournalSticker> to work)
+class JournalSticker {
+  String path;
+  double x;
+  double y;
+  double scale;
+
+  JournalSticker({required this.path, required this.x, required this.y, this.scale = 1.0});
+
+  Map<String, dynamic> toMap() => {'path': path, 'x': x, 'y': y, 'scale': scale};
+
+  factory JournalSticker.fromMap(Map<String, dynamic> map) {
+    return JournalSticker(
+      path: map['path'],
+      x: (map['x'] ?? 0).toDouble(),
+      y: (map['y'] ?? 0).toDouble(),
+      scale: (map['scale'] ?? 1.0).toDouble(),
     );
   }
 }
