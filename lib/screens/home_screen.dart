@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home',
+        title: const Text('Renbo',
             style: TextStyle(
                 color: AppTheme.darkGray, fontWeight: FontWeight.bold)),
         actions: [

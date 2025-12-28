@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:renbo/api/gemini_service.dart';
 import 'package:renbo/utils/theme.dart';
 import 'package:renbo/widgets/chat_bubble.dart';
-import 'package:renbo/services/journal_storage.dart'; // 🔥 Added for thread saving
+import 'package:renbo/services/journal_storage.dart';
+import 'package:renbo/screens/saved_threads_screen.dart';
 import 'hotlines_screen.dart';
-import 'package:speech_to_text/speech_to_text.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -16,80 +17,91 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final GeminiService _geminiService = GeminiService();
+
   final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
 
-  // State for Speech-to-Text
   final SpeechToText _speechToText = SpeechToText();
   bool _isListening = false;
+  bool _speechEnabled = false;
 
-  // State for Text-to-Speech
   final FlutterTts _flutterTts = FlutterTts();
 
   @override
   void initState() {
     super.initState();
-    _initSpeechToText();
+    _initSpeech();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     _speechToText.stop();
     _flutterTts.stop();
     super.dispose();
   }
 
-  void _initSpeechToText() async {
-    await _speechToText.initialize(
-      onError: (e) => debugPrint('STT Error: $e'),
-    );
+  void _initSpeech() async {
+    try {
+      _speechEnabled = await _speechToText.initialize();
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint("Speech init failed: $e");
+    }
   }
 
-  // 🔥 Logic Gate: Prompt user to save the session
-  Future<bool> _showEndSessionDialog() async {
-    if (_messages.isEmpty) return true; // If no messages, just leave
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
-    final shouldPop = await showDialog<bool>(
+  Future<bool> _showEndSessionDialog() async {
+    if (_messages.isEmpty) return true;
+
+    final result = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text("End Session?"),
-        content: const Text(
-          "Would you like to save this conversation as an emotional time capsule in your journal?",
-        ),
+        content: const Text("Would you like to save this thread?"),
         actions: [
           TextButton(
             onPressed: () {
               JournalStorage.deleteTemporaryChat();
-              Navigator.pop(context, true); // Return true to exit
+              Navigator.pop(context, true);
             },
             child: const Text("Discard", style: TextStyle(color: Colors.red)),
           ),
           ElevatedButton(
             onPressed: () async {
-              // Commit the thread to Firestore
+              // Now saves to saved_threads collection, not journal
               await JournalStorage.saveChatThread(
                 messages: _messages,
                 summary:
-                    "Session on ${DateTime.now().day}/${DateTime.now().month}",
+                    "Session: ${DateTime.now().day}/${DateTime.now().month} ${DateTime.now().hour}:${DateTime.now().minute}",
               );
-              if (mounted) Navigator.pop(context, true); // Return true to exit
+              if (mounted) Navigator.pop(context, true);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
-            ),
-            child: const Text("Save to Journal",
+                backgroundColor: AppTheme.primaryColor),
+            child: const Text("Save Thread",
                 style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
-
-    return shouldPop ?? false;
+    return result ?? false;
   }
 
   void _sendMessage() async {
@@ -100,33 +112,24 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.add({'sender': 'user', 'text': text});
       _isLoading = true;
     });
-
     _controller.clear();
+    _scrollToBottom();
 
     try {
       final classifiedResponse = await _geminiService.generateAndClassify(text);
-
-      if (classifiedResponse.isHarmful && mounted) {
-        _showHotlineSuggestion();
-      }
-
       if (mounted) {
         setState(() {
           _messages.add({'sender': 'bot', 'text': classifiedResponse.response});
+          _isLoading = false;
         });
+        _scrollToBottom();
+        if (classifiedResponse.isHarmful) _showHotlineSuggestion();
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add({
-            'sender': 'bot',
-            'text': 'I couldn\'t get a response. Try again. 😞',
-          });
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
+          _messages.add(
+              {'sender': 'bot', 'text': 'I am having trouble connecting. 😞'});
           _isLoading = false;
         });
       }
@@ -137,40 +140,22 @@ class _ChatScreenState extends State<ChatScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange),
-            SizedBox(width: 10),
-            Text("You’re Not Alone"),
-          ],
-        ),
-        content: const Text(
-          "It sounds like you’re going through a really tough time. "
-          "Please consider reaching out to a professional for immediate help.\n\n"
-          "Would you like to see a list of mental wellness hotlines now?",
-        ),
+        title: const Text("You’re Not Alone"),
+        content: const Text("Would you like to see help hotlines?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Not Now"),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Not Now")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                )),
+                backgroundColor: AppTheme.primaryColor),
             onPressed: () {
               Navigator.pop(context);
               Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => HotlinesScreen()),
-              );
+                  context, MaterialPageRoute(builder: (_) => HotlinesScreen()));
             },
-            child: const Text("View Hotlines"),
+            child: const Text("View Hotlines",
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -178,100 +163,87 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _toggleListening() async {
+    if (!_speechEnabled) return;
     if (_isListening) {
-      _speechToText.stop();
+      await _speechToText.stop();
       setState(() => _isListening = false);
     } else {
-      bool available = await _speechToText.hasPermission;
-      if (available) {
-        setState(() => _isListening = true);
-        _speechToText.listen(
-          onResult: (result) {
-            setState(() {
-              _controller.text = result.recognizedWords;
-            });
-            if (result.finalResult) {
-              _speechToText.stop();
-              setState(() => _isListening = false);
-              _sendMessage();
-            }
-          },
-        );
-      }
+      setState(() => _isListening = true);
+      await _speechToText.listen(onResult: (result) {
+        setState(() => _controller.text = result.recognizedWords);
+        if (result.finalResult) {
+          setState(() => _isListening = false);
+          _sendMessage();
+        }
+      });
     }
-  }
-
-  void _speakText(String text) {
-    _flutterTts.speak(text);
   }
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 Wrap in PopScope to intercept the back button
     return PopScope(
-      canPop: false, // We handle the popping ourselves
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldExit = await _showEndSessionDialog();
-        if (shouldExit && mounted) {
-          Navigator.of(context).pop();
-        }
+        if (shouldExit && mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () async {
-              final shouldExit = await _showEndSessionDialog();
-              if (shouldExit && mounted) {
-                Navigator.of(context).pop();
-              }
-            },
-          ),
-          title: const Text(
-            'Chat with Renbot',
-            style: TextStyle(
-              color: AppTheme.darkGray,
-              fontWeight: FontWeight.bold,
+          centerTitle: true,
+          title: const Text('Renbot Chat',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          actions: [
+            // 🔥 Person A: New Button to view saved threads
+            IconButton(
+              icon: const Icon(Icons.history_edu_rounded),
+              tooltip: 'Saved Threads',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SavedThreadsScreen()),
+              ),
             ),
-          ),
+          ],
         ),
         body: Column(
           children: [
             Expanded(
               child: ListView.builder(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(16),
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final message = _messages[index];
                   final isSender = message['sender'] == 'user';
-                  return Row(
-                    mainAxisAlignment: isSender
-                        ? MainAxisAlignment.end
-                        : MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Flexible(
-                        child: ChatBubble(
-                          text: message['text']!,
-                          isSender: isSender,
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Row(
+                      mainAxisAlignment: isSender
+                          ? MainAxisAlignment.end
+                          : MainAxisAlignment.start,
+                      children: [
+                        // Removed Robot Avatar from here
+                        Flexible(
+                          child: ChatBubble(
+                              text: message['text']!, isSender: isSender),
                         ),
-                      ),
-                      if (!isSender)
-                        IconButton(
-                          icon: const Icon(Icons.volume_up, size: 20),
-                          onPressed: () => _speakText(message['text']!),
-                        ),
-                    ],
+                        if (!isSender)
+                          IconButton(
+                            icon: const Icon(Icons.volume_up,
+                                size: 18, color: Colors.grey),
+                            onPressed: () =>
+                                _flutterTts.speak(message['text']!),
+                          ),
+                      ],
+                    ),
                   );
                 },
               ),
             ),
             if (_isLoading)
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0),
-                child: CircularProgressIndicator(color: AppTheme.primaryColor),
-              ),
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator()),
             _buildMessageComposer(),
           ],
         ),
@@ -281,52 +253,35 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildMessageComposer() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-      color: Colors.white,
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                hintText: _isListening ? 'Listening...' : 'Type a message...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
+      padding: const EdgeInsets.all(12),
+      decoration: const BoxDecoration(color: Colors.white),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                decoration: InputDecoration(
+                  hintText: _isListening ? "Listening..." : "Message...",
+                  filled: true,
+                  fillColor: AppTheme.lightGray,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none),
                 ),
-                filled: true,
-                fillColor: AppTheme.lightGray,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
               ),
-              onSubmitted: (_) => _sendMessage(),
             ),
-          ),
-          const SizedBox(width: 8.0),
-          Container(
-            decoration: BoxDecoration(
-              color: _isListening
-                  ? AppTheme.secondaryColor
-                  : AppTheme.primaryColor,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: Icon(_isListening ? Icons.mic_off : Icons.mic,
-                  color: Colors.white),
+            IconButton(
+              icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
+                  color: _isListening ? Colors.red : AppTheme.primaryColor),
               onPressed: _toggleListening,
             ),
-          ),
-          const SizedBox(width: 8.0),
-          Container(
-            decoration: const BoxDecoration(
-              color: AppTheme.primaryColor,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
+            IconButton(
+              icon: const Icon(Icons.send, color: AppTheme.primaryColor),
               onPressed: _sendMessage,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
