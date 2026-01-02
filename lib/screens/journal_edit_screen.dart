@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
-
 import '../services/journal_storage.dart';
 import '../models/journal_entry.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class JournalEditScreen extends StatefulWidget {
   final JournalEntry entry;
@@ -39,21 +40,21 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
     super.dispose();
   }
 
-  void _saveEntry() async {
+  void _saveEntry(AppLocalizations l10n) async {
     final text = _controller.text.trim();
     if (text.isEmpty && pickedImage == null && recordedAudioPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please write, record, or add an image before saving.'),
+        SnackBar(
+          content: Text(l10n.emptyEntryError), // ✅ Translated
         ),
       );
       return;
     }
 
     final updatedEntry = JournalEntry(
-      id: widget.entry.id, // Pass existing ID to update
+      id: widget.entry.id,
       content: text,
-      timestamp: widget.entry.timestamp, // Keep original timestamp
+      timestamp: widget.entry.timestamp,
       emotion: widget.entry.emotion,
       imagePath: pickedImage?.path,
       audioPath: recordedAudioPath,
@@ -70,7 +71,7 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
     if (image != null) setState(() => pickedImage = File(image.path));
   }
 
-  Future<void> _startStopRecording() async {
+  Future<void> _startStopRecording(AppLocalizations l10n) async {
     if (await _audioRecorder.isRecording()) {
       final path = await _audioRecorder.stop();
       setState(() {
@@ -79,7 +80,7 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Recording stopped')));
+            .showSnackBar(SnackBar(content: Text(l10n.recordingStopped))); // ✅ Translated
       }
     } else {
       if (await _audioRecorder.hasPermission()) {
@@ -91,12 +92,12 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
         setState(() => isRecording = true);
         if (mounted) {
           ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Recording started')));
+              .showSnackBar(SnackBar(content: Text(l10n.recordingStarted))); // ✅ Translated
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Permission denied')));
+              .showSnackBar(SnackBar(content: Text(l10n.permissionDenied))); // ✅ Translated
         }
       }
     }
@@ -104,11 +105,14 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF5F2),
       appBar: AppBar(
-        title: const Text("Edit Journal Entry",
-            style: TextStyle(color: Colors.white)),
+        title: Text(l10n.editJournalEntry, // ✅ Translated
+            style: const TextStyle(color: Colors.white)),
         centerTitle: true,
         backgroundColor: const Color(0xFF568F87),
       ),
@@ -127,7 +131,7 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      hintText: "Edit your entry...",
+                      hintText: l10n.editEntryHint, // ✅ Translated
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
@@ -153,10 +157,10 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
-                  onPressed: _startStopRecording,
+                  onPressed: () => _startStopRecording(l10n),
                   icon: Icon(isRecording ? Icons.stop : Icons.mic,
                       color: Colors.white),
-                  label: Text(isRecording ? 'Stop' : 'Record Audio',
+                  label: Text(isRecording ? l10n.stopRecording : l10n.recordAudio, // ✅ Translated
                       style: const TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
@@ -166,8 +170,8 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
                 ElevatedButton.icon(
                   onPressed: _pickImage,
                   icon: const Icon(Icons.image, color: Colors.white),
-                  label: const Text('Change Image',
-                      style: TextStyle(color: Colors.white)),
+                  label: Text(l10n.changeImage, // ✅ Translated
+                      style: const TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF568F87)),
                 ),
@@ -183,8 +187,8 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18)),
               ),
-              onPressed: _saveEntry,
-              child: const Text("Save Changes"),
+              onPressed: () => _saveEntry(l10n),
+              child: Text(l10n.saveChanges), // ✅ Translated
             ),
           ],
         ),

@@ -7,6 +7,8 @@ import 'package:renbo/widgets/chat_bubble.dart';
 import 'package:renbo/services/journal_storage.dart';
 import 'package:renbo/screens/saved_threads_screen.dart';
 import 'hotlines_screen.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -65,7 +67,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  Future<bool> _showEndSessionDialog() async {
+  Future<bool> _showEndSessionDialog(AppLocalizations l10n) async {
     if (_messages.isEmpty) return true;
 
     final result = await showDialog<bool>(
@@ -73,30 +75,32 @@ class _ChatScreenState extends State<ChatScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("End Session?"),
-        content: const Text("Would you like to save this thread?"),
+        title: Text(l10n.endSession), // ✅ Translated
+        content: Text(l10n.saveThreadQuestion), // ✅ Translated
         actions: [
           TextButton(
             onPressed: () {
               JournalStorage.deleteTemporaryChat();
               Navigator.pop(context, true);
             },
-            child: const Text("Discard", style: TextStyle(color: Colors.red)),
+            child: Text(l10n.discard, style: const TextStyle(color: Colors.red)), // ✅ Translated
           ),
           ElevatedButton(
             onPressed: () async {
-              // Now saves to saved_threads collection, not journal
+              // Create dynamic date string
+              final dateStr = "${DateTime.now().day}/${DateTime.now().month} ${DateTime.now().hour}:${DateTime.now().minute}";
+              
               await JournalStorage.saveChatThread(
                 messages: _messages,
-                summary:
-                    "Session: ${DateTime.now().day}/${DateTime.now().month} ${DateTime.now().hour}:${DateTime.now().minute}",
+                // ✅ Translated Summary
+                summary: l10n.sessionDefaultTitle(dateStr), 
               );
               if (mounted) Navigator.pop(context, true);
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor),
-            child: const Text("Save Thread",
-                style: TextStyle(color: Colors.white)),
+            child: Text(l10n.saveThread, // ✅ Translated
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -104,7 +108,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return result ?? false;
   }
 
-  void _sendMessage() async {
+  void _sendMessage(AppLocalizations l10n) async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
@@ -123,29 +127,29 @@ class _ChatScreenState extends State<ChatScreen> {
           _isLoading = false;
         });
         _scrollToBottom();
-        if (classifiedResponse.isHarmful) _showHotlineSuggestion();
+        if (classifiedResponse.isHarmful) _showHotlineSuggestion(l10n);
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _messages.add(
-              {'sender': 'bot', 'text': 'I am having trouble connecting. 😞'});
+              {'sender': 'bot', 'text': l10n.connectionError}); // ✅ Translated
           _isLoading = false;
         });
       }
     }
   }
 
-  void _showHotlineSuggestion() {
+  void _showHotlineSuggestion(AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("You’re Not Alone"),
-        content: const Text("Would you like to see help hotlines?"),
+        title: Text(l10n.youAreNotAlone), // ✅ Translated
+        content: Text(l10n.hotlineQuestion), // ✅ Translated
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Not Now")),
+              child: Text(l10n.notNow)), // ✅ Translated
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor),
@@ -154,15 +158,15 @@ class _ChatScreenState extends State<ChatScreen> {
               Navigator.push(
                   context, MaterialPageRoute(builder: (_) => HotlinesScreen()));
             },
-            child: const Text("View Hotlines",
-                style: TextStyle(color: Colors.white)),
+            child: Text(l10n.viewHotlines, // ✅ Translated
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  void _toggleListening() async {
+  void _toggleListening(AppLocalizations l10n) async {
     if (!_speechEnabled) return;
     if (_isListening) {
       await _speechToText.stop();
@@ -173,7 +177,7 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() => _controller.text = result.recognizedWords);
         if (result.finalResult) {
           setState(() => _isListening = false);
-          _sendMessage();
+          _sendMessage(l10n);
         }
       });
     }
@@ -181,23 +185,25 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        final shouldExit = await _showEndSessionDialog();
+        final shouldExit = await _showEndSessionDialog(l10n);
         if (shouldExit && mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: const Text('Renbot Chat',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(l10n.chatTitle, // ✅ Translated
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           actions: [
-            // 🔥 Person A: New Button to view saved threads
             IconButton(
               icon: const Icon(Icons.history_edu_rounded),
-              tooltip: 'Saved Threads',
+              tooltip: l10n.savedThreads, // ✅ Translated
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const SavedThreadsScreen()),
@@ -222,7 +228,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           ? MainAxisAlignment.end
                           : MainAxisAlignment.start,
                       children: [
-                        // Removed Robot Avatar from here
                         Flexible(
                           child: ChatBubble(
                               text: message['text']!, isSender: isSender),
@@ -244,14 +249,14 @@ class _ChatScreenState extends State<ChatScreen> {
               const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: CircularProgressIndicator()),
-            _buildMessageComposer(),
+            _buildMessageComposer(l10n),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMessageComposer() {
+  Widget _buildMessageComposer(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: const BoxDecoration(color: Colors.white),
@@ -262,7 +267,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: TextField(
                 controller: _controller,
                 decoration: InputDecoration(
-                  hintText: _isListening ? "Listening..." : "Message...",
+                  hintText: _isListening ? l10n.listening : l10n.messageHint, // ✅ Translated
                   filled: true,
                   fillColor: AppTheme.lightGray,
                   border: OutlineInputBorder(
@@ -274,11 +279,11 @@ class _ChatScreenState extends State<ChatScreen> {
             IconButton(
               icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
                   color: _isListening ? Colors.red : AppTheme.primaryColor),
-              onPressed: _toggleListening,
+              onPressed: () => _toggleListening(l10n),
             ),
             IconButton(
               icon: const Icon(Icons.send, color: AppTheme.primaryColor),
-              onPressed: _sendMessage,
+              onPressed: () => _sendMessage(l10n),
             ),
           ],
         ),

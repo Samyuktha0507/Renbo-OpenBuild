@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class Hotline {
-  final String name; // e.g. "KIRAN Mental Health Helpline"
-  final String
-      description; // e.g. "For mental health support, stress, anxiety, depression"
-  final String contactPerson; // e.g. "Trained Mental Health Counselors"
+  final String name; 
+  final String description; 
+  final String contactPerson; 
   final String phone;
 
   Hotline({
@@ -17,31 +18,7 @@ class Hotline {
 }
 
 class HotlinesScreen extends StatelessWidget {
-  HotlinesScreen({super.key});
-
-  final List<Hotline> hotlines = [
-    Hotline(
-      name: "KIRAN Mental Health Helpline",
-      description:
-          "24/7 support for stress, anxiety, depression, suicidal thoughts.",
-      contactPerson: "Trained Mental Health Counselors",
-      phone: "18005990019",
-    ),
-    Hotline(
-      name: "Vandrevala Foundation Helpline",
-      description:
-          "Support for emotional distress, depression, suicidal thoughts.",
-      contactPerson: "Counselors at Vandrevala Foundation",
-      phone: "18602662345",
-    ),
-    Hotline(
-      name: "Snehi (Delhi-based NGO)",
-      description:
-          "Emotional support for suicide prevention & crisis intervention.",
-      contactPerson: "Snehi Volunteer Counselors",
-      phone: "9582208181",
-    ),
-  ];
+  const HotlinesScreen({super.key});
 
   /// Initiates a phone call to the provided [phoneNumber].
   Future<void> _makePhoneCall(String phoneNumber) async {
@@ -49,8 +26,6 @@ class HotlinesScreen extends StatelessWidget {
     if (await canLaunchUrl(callUri)) {
       await launchUrl(callUri);
     } else {
-      // In a real app, you might want to show a gentle error message
-      // to the user here, e.g., using a SnackBar.
       debugPrint('Could not launch phone dialer for $phoneNumber');
       throw 'Could not launch $phoneNumber';
     }
@@ -58,11 +33,36 @@ class HotlinesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
+    // ✅ Define Data INSIDE build to use translations
+    final List<Hotline> hotlines = [
+      Hotline(
+        name: l10n.hotlineKiran, // ✅ Translated
+        description: l10n.descKiran, // ✅ Translated
+        contactPerson: l10n.personKiran, // ✅ Translated
+        phone: "18005990019",
+      ),
+      Hotline(
+        name: l10n.hotlineVandrevala, // ✅ Translated
+        description: l10n.descVandrevala, // ✅ Translated
+        contactPerson: l10n.personVandrevala, // ✅ Translated
+        phone: "18602662345",
+      ),
+      Hotline(
+        name: l10n.hotlineSnehi, // ✅ Translated
+        description: l10n.descSnehi, // ✅ Translated
+        contactPerson: l10n.personSnehi, // ✅ Translated
+        phone: "9582208181",
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Mental Wellness Hotlines",
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          l10n.hotlinesTitle, // ✅ Translated
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: ListView.builder(
@@ -96,7 +96,7 @@ class HotlinesScreen extends StatelessWidget {
                     Text(hotline.description),
                     const SizedBox(height: 4),
                     Text(
-                      "Contact: ${hotline.contactPerson}",
+                      l10n.contactPrefix(hotline.contactPerson), // ✅ Translated
                       style: const TextStyle(
                         fontStyle: FontStyle.italic,
                         color: Colors.black54,
@@ -107,7 +107,7 @@ class HotlinesScreen extends StatelessWidget {
               ),
               trailing: IconButton(
                 icon: const Icon(Icons.call, color: Colors.green, size: 28),
-                tooltip: 'Call ${hotline.phone}',
+                tooltip: l10n.callTooltip(hotline.phone), // ✅ Translated
                 onPressed: () => _makePhoneCall(hotline.phone),
               ),
             ),

@@ -5,6 +5,8 @@ import 'package:renbo/models/gratitude.dart';
 import 'package:renbo/services/gratitude_storage.dart';
 import 'package:renbo/utils/theme.dart';
 import 'package:renbo/widgets/gratitude_bubbles_widget.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class GratitudeBubblesScreen extends StatefulWidget {
   const GratitudeBubblesScreen({super.key});
@@ -36,14 +38,12 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
     super.dispose();
   }
 
-  // 🔥 Firestore version: Just push to DB, StreamBuilder handles the rest
   void _addGratitude() async {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       await GratitudeStorage.addGratitude(text);
       _controller.clear();
 
-      // Trigger confetti animation
       setState(() {
         _showConfetti = true;
       });
@@ -58,21 +58,21 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
     }
   }
 
-  void _showAddGratitudeDialog() {
+  void _showAddGratitudeDialog(AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Add a Gratitude',
-          style: TextStyle(color: AppTheme.darkGray),
+        title: Text(
+          l10n.addGratitude, // ✅ Translated
+          style: const TextStyle(color: AppTheme.darkGray),
         ),
         content: TextField(
           controller: _controller,
           autofocus: true,
           decoration: InputDecoration(
-            hintText: 'What are you grateful for today?',
+            hintText: l10n.gratitudeHint, // ✅ Translated
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(15),
             ),
@@ -85,8 +85,8 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppTheme.mediumGray)),
+            child: Text(l10n.cancel, // ✅ Translated
+                style: const TextStyle(color: AppTheme.mediumGray)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -98,7 +98,7 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15)),
             ),
-            child: const Text('Add', style: TextStyle(color: Colors.white)),
+            child: Text(l10n.add, style: const TextStyle(color: Colors.white)), // ✅ Translated
           ),
         ],
       ),
@@ -107,22 +107,25 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Gratitude Bubbles',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(l10n.gratitudeTitle, // ✅ Translated
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddGratitudeDialog,
+        onPressed: () => _showAddGratitudeDialog(l10n),
         backgroundColor: const Color.fromARGB(255, 129, 167, 199),
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: Stack(
         children: [
-          // 🔥 REAL-TIME STREAM: Listens to Firestore changes
+          // Stream Builder for Real-time Updates
           StreamBuilder<List<Gratitude>>(
             stream: GratitudeStorage.getGratitudeStream(),
             builder: (context, snapshot) {
@@ -131,10 +134,10 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
               }
 
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
-                    'No gratitudes yet. Add one to see it float!',
-                    style: TextStyle(fontSize: 16, color: AppTheme.mediumGray),
+                    l10n.noGratitudes, // ✅ Translated
+                    style: const TextStyle(fontSize: 16, color: AppTheme.mediumGray),
                     textAlign: TextAlign.center,
                   ),
                 );
@@ -147,8 +150,7 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
 
               return Stack(
                 children: gratitudes.map((gratitude) {
-                  // Generate stable random positions based on the document ID
-                  // (using seed so bubbles don't jump around on every refresh)
+                  // Stable random position based on ID
                   final seed = gratitude.id.hashCode;
                   final random = Random(seed);
 
@@ -157,17 +159,15 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
                   final double yOffset =
                       random.nextDouble() * (screenHeight * 0.7 - size);
 
-                  return Positioned(
-                    left: xOffset,
-                    top: yOffset,
-                    child: GratitudeBubble(
-                      gratitude: gratitude,
-                      bubbleSize: size,
-                      animation: _animationController,
-                      xOffset: xOffset,
-                      yOffset: yOffset,
-                      onUpdated: () {}, // Stream handles updates now
-                    ),
+                  // 🛠️ FIX: Removed 'Positioned' here because GratitudeBubble likely
+                  // returns a Positioned widget internally (causing the conflict).
+                  return GratitudeBubble(
+                    gratitude: gratitude,
+                    bubbleSize: size,
+                    animation: _animationController,
+                    xOffset: xOffset,
+                    yOffset: yOffset,
+                    onUpdated: () {}, 
                   );
                 }).toList(),
               );

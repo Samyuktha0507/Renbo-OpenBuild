@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:renbo/utils/theme.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class SessionsScreen extends StatelessWidget {
   const SessionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Sessions',
-          style: TextStyle(
+        title: Text(
+          l10n.sessionsTitle, // ✅ Translated
+          style: const TextStyle(
             color: AppTheme.darkGray,
             fontWeight: FontWeight.bold,
           ),
@@ -22,13 +27,13 @@ class SessionsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildUpcomingSession(),
+              _buildUpcomingSession(l10n),
               const SizedBox(height: 20),
-              const Text(
-                'All Sessions',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                l10n.allSessions, // ✅ Translated
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              _buildSessionList(),
+              _buildSessionList(l10n),
             ],
           ),
         ),
@@ -36,23 +41,24 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingSession() {
+  Widget _buildUpcomingSession(AppLocalizations l10n) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Upcoming Session',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l10n.upcomingSession, // ✅ Translated
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             _buildSessionCard(
               name: 'Selena V',
-              specialty: 'Clinical Psychology',
+              specialty: l10n.clinicalPsychology, // ✅ Translated
               time: '7:00 PM - 8:00 PM',
               isUpcoming: true,
+              l10n: l10n,
             ),
           ],
         ),
@@ -60,18 +66,20 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSessionList() {
+  Widget _buildSessionList(AppLocalizations l10n) {
     return Column(
       children: [
         _buildSessionCard(
           name: 'Selena V',
-          specialty: 'Clinical Psychology',
+          specialty: l10n.clinicalPsychology, // ✅ Translated
           time: 'Flat March 28',
+          l10n: l10n,
         ),
         _buildSessionCard(
           name: 'Jessica R',
-          specialty: 'Counseling',
+          specialty: l10n.counseling, // ✅ Translated
           time: 'Flat March 27',
+          l10n: l10n,
         ),
       ],
     );
@@ -81,6 +89,7 @@ class SessionsScreen extends StatelessWidget {
     required String name,
     required String specialty,
     required String time,
+    required AppLocalizations l10n, // Pass translation helper
     bool isUpcoming = false,
   }) {
     return Card(
@@ -134,7 +143,7 @@ class SessionsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Reschedule'),
+                    child: Text(l10n.reschedule), // ✅ Translated
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -145,7 +154,7 @@ class SessionsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Join Now'),
+                    child: Text(l10n.joinNow), // ✅ Translated
                   ),
                 ],
               )
@@ -159,7 +168,7 @@ class SessionsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                child: const Text('Re-book'),
+                child: Text(l10n.rebook), // ✅ Translated
               ),
           ],
         ),

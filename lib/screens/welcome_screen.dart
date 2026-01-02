@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -14,13 +16,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     super.initState();
     // After 3 seconds, navigate to the authentication check screen.
     Future.delayed(const Duration(seconds: 3), () {
-      // This line is updated to go to the auth check route first.
       Navigator.of(context).pushReplacementNamed('/auth_check');
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    // Note: Since this is the very first screen, make sure LocaleProvider is initialized higher up
+    // If AppLocalizations is null here, ensure MaterialApp has the delegates set correctly.
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Center(
         child: Column(
@@ -32,9 +38,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               height: 200,
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Renbo',
-              style: TextStyle(
+            Text(
+              l10n.appTitle, // ✅ Translated
+              style: const TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFF06292),

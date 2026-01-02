@@ -5,23 +5,29 @@ import '../models/time_capsule.dart';
 import '../providers/capsule_provider.dart';
 import '../widgets/capsule_card.dart';
 import 'create_capsule_screen.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class CapsuleVaultScreen extends StatelessWidget {
   const CapsuleVaultScreen({super.key});
 
   /// Helper to calculate the most relevant time unit for the countdown
-  String _getTimeRemainingText(TimeCapsule capsule) {
+  /// ✅ Now accepts l10n to translate the output
+  String _getTimeRemainingText(TimeCapsule capsule, AppLocalizations l10n) {
     final diff = capsule.deliveryDate.difference(DateTime.now());
-    if (diff.isNegative || diff.inSeconds <= 0) return "Ready to open!";
+    if (diff.isNegative || diff.inSeconds <= 0) return l10n.readyToOpen;
 
-    if (diff.inDays > 0) return "Unlocks in ${diff.inDays}d";
-    if (diff.inHours > 0) return "Unlocks in ${diff.inHours}h";
-    if (diff.inMinutes > 0) return "Unlocks in ${diff.inMinutes}m";
-    return "Unlocks in ${diff.inSeconds}s";
+    if (diff.inDays > 0) return l10n.unlocksInDays(diff.inDays);
+    if (diff.inHours > 0) return l10n.unlocksInHours(diff.inHours);
+    if (diff.inMinutes > 0) return l10n.unlocksInMinutes(diff.inMinutes);
+    return l10n.unlocksInSeconds(diff.inSeconds);
   }
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     // Listen to the provider for real-time data updates
     final capsuleProvider = Provider.of<CapsuleProvider>(context);
     final allCapsules = capsuleProvider.capsules;
@@ -37,24 +43,28 @@ class CapsuleVaultScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            "Emotional Vault",
-            style:
-                TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+          title: Text(
+            l10n.vaultTitle, // ✅ Translated
+            style: const TextStyle(
+                fontFamily: 'Poppins', fontWeight: FontWeight.bold),
           ),
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: "Unlocked", icon: Icon(Icons.lock_open)),
-              Tab(text: "Locked", icon: Icon(Icons.lock_outline)),
+              Tab(
+                  text: l10n.tabUnlocked,
+                  icon: const Icon(Icons.lock_open)), // ✅ Translated
+              Tab(
+                  text: l10n.tabLocked,
+                  icon: const Icon(Icons.lock_outline)), // ✅ Translated
             ],
-            indicatorColor: Color(0xFF8E97FD),
-            labelColor: Color(0xFF8E97FD),
+            indicatorColor: const Color(0xFF8E97FD),
+            labelColor: const Color(0xFF8E97FD),
           ),
         ),
         body: TabBarView(
           children: [
-            _buildList(context, unlocked),
-            _buildList(context, locked),
+            _buildList(context, unlocked, l10n), // Pass l10n
+            _buildList(context, locked, l10n),
           ],
         ),
         floatingActionButton: FloatingActionButton(
@@ -70,15 +80,16 @@ class CapsuleVaultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildList(BuildContext context, List<TimeCapsule> list) {
+  Widget _buildList(
+      BuildContext context, List<TimeCapsule> list, AppLocalizations l10n) {
     if (list.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20.0),
           child: Text(
-            "Your vault is currently empty.",
+            l10n.vaultEmpty, // ✅ Translated
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey, fontFamily: 'Poppins'),
+            style: const TextStyle(color: Colors.grey, fontFamily: 'Poppins'),
           ),
         ),
       );
@@ -90,7 +101,7 @@ class CapsuleVaultScreen extends StatelessWidget {
       itemBuilder: (context, index) {
         final capsule = list[index];
 
-        // CRITICAL FIX: Re-check readiness exactly when the item is rendered/tapped
+        // Check readiness exactly when the item is rendered/tapped
         final bool isReadyNow = DateTime.now().isAfter(capsule.deliveryDate);
 
         return CapsuleCard(
@@ -98,12 +109,14 @@ class CapsuleVaultScreen extends StatelessWidget {
           onTap: () {
             if (isReadyNow) {
               // Open content immediately if the clock has passed the delivery time
-              _showContent(context, capsule);
+              _showContent(context, capsule, l10n);
             } else {
               // Show time remaining if it's still in the future
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text("Patience! ${_getTimeRemainingText(capsule)}"),
+                  // ✅ Translated with dynamic parameter
+                  content: Text(l10n.patienceMessage(
+                      _getTimeRemainingText(capsule, l10n))),
                   duration: const Duration(seconds: 2),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
@@ -117,7 +130,12 @@ class CapsuleVaultScreen extends StatelessWidget {
     );
   }
 
-  void _showContent(BuildContext context, TimeCapsule capsule) {
+  void _showContent(
+      BuildContext context, TimeCapsule capsule, AppLocalizations l10n) {
+    // ✅ Format date based on current language locale
+    final dateStr = DateFormat('MMMM dd, yyyy', l10n.localeName)
+        .format(capsule.createdAt);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -140,9 +158,9 @@ class CapsuleVaultScreen extends StatelessWidget {
                   color: Colors.orangeAccent, size: 40),
             ),
             const SizedBox(height: 20),
-            const Text(
-              "A Message from the Past",
-              style: TextStyle(
+            Text(
+              l10n.messageFromPast, // ✅ Translated
+              style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'Poppins'),
@@ -162,7 +180,7 @@ class CapsuleVaultScreen extends StatelessWidget {
             Divider(color: Colors.grey[300]),
             const SizedBox(height: 10),
             Text(
-              "Sealed on ${DateFormat('MMMM dd, yyyy').format(capsule.createdAt)}",
+              l10n.sealedOn(dateStr), // ✅ Translated
               style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
             const SizedBox(height: 30),
@@ -176,8 +194,8 @@ class CapsuleVaultScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15)),
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
-                child: const Text("Close",
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: Text(l10n.close, // ✅ Translated
+                    style: const TextStyle(color: Colors.white, fontSize: 16)),
               ),
             ),
           ],

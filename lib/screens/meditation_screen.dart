@@ -4,6 +4,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
 import 'white_noise_synthesizer.dart';
 import 'breathing_guide_page.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class MeditationScreen extends StatefulWidget {
   const MeditationScreen({super.key});
@@ -24,23 +26,8 @@ class _MeditationScreenState extends State<MeditationScreen>
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
 
-  final List<Map<String, String>> _tracks = [
-    {
-      'title': 'Zen Meditation',
-      'artist': 'Inner Peace',
-      'path': 'audio/zen.mp3',
-    },
-    {
-      'title': 'Soul Music',
-      'artist': 'Nature Sounds',
-      'path': 'audio/soul.mp3',
-    },
-    {
-      'title': 'Rain Melody',
-      'artist': 'Relaxing Rain Rhythms',
-      'path': 'audio/rain.mp3',
-    },
-  ];
+  // Track data is now loaded inside build() to support translation
+  List<Map<String, String>> _tracks = [];
 
   int? _selectedTrackIndex;
 
@@ -97,7 +84,7 @@ class _MeditationScreenState extends State<MeditationScreen>
   @override
   void dispose() {
     player.dispose();
-    _meditationTimer.cancel();
+    if (_meditationTimerIsRunning) _meditationTimer.cancel();
     super.dispose();
   }
 
@@ -117,7 +104,7 @@ class _MeditationScreenState extends State<MeditationScreen>
 
     final selectedTrackPath = _tracks[index]['path']!;
     await player.setSource(AssetSource(selectedTrackPath));
-    await player.setReleaseMode(ReleaseMode.loop); // Added to loop the audio
+    await player.setReleaseMode(ReleaseMode.loop); 
     await player.resume();
   }
 
@@ -133,14 +120,36 @@ class _MeditationScreenState extends State<MeditationScreen>
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
+    // ✅ Define tracks here to use translations
+    _tracks = [
+      {
+        'title': 'Zen Meditation',
+        'artist': 'Inner Peace',
+        'path': 'audio/zen.mp3',
+      },
+      {
+        'title': 'Soul Music',
+        'artist': 'Nature Sounds',
+        'path': 'audio/soul.mp3',
+      },
+      {
+        'title': 'Rain Melody',
+        'artist': 'Relaxing Rain Rhythms',
+        'path': 'audio/rain.mp3',
+      },
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'Meditation',
-          style: TextStyle(
+        title: Text(
+          l10n.meditation, // ✅ Translated
+          style: const TextStyle(
             color: AppTheme.darkGray,
             fontWeight: FontWeight.bold,
           ),
@@ -163,7 +172,7 @@ class _MeditationScreenState extends State<MeditationScreen>
                     );
                   },
                   icon: const Icon(Icons.self_improvement),
-                  label: const Text('Breathing Guide'),
+                  label: Text(l10n.breathingGuide), // ✅ Translated
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
@@ -174,7 +183,7 @@ class _MeditationScreenState extends State<MeditationScreen>
                     );
                   },
                   icon: const Icon(Icons.graphic_eq),
-                  label: const Text('White Noise'),
+                  label: Text(l10n.whiteNoise), // ✅ Translated
                 ),
               ],
             ),
@@ -187,7 +196,7 @@ class _MeditationScreenState extends State<MeditationScreen>
                   onPressed: _meditationTimerIsRunning
                       ? _pauseMeditationTimer
                       : _startMeditationTimer,
-                  label: Text(_meditationTimerIsRunning ? 'Pause' : 'Start'),
+                  label: Text(_meditationTimerIsRunning ? l10n.pauseBreathing : l10n.start), // ✅ Translated
                   icon: Icon(_meditationTimerIsRunning
                       ? Icons.pause
                       : Icons.play_arrow),
@@ -198,7 +207,7 @@ class _MeditationScreenState extends State<MeditationScreen>
                 FloatingActionButton.extended(
                   heroTag: 'meditation-timer-reset',
                   onPressed: _resetMeditationTimer,
-                  label: const Text('Reset'),
+                  label: Text(l10n.reset), // ✅ Translated
                   icon: const Icon(Icons.refresh),
                   backgroundColor: AppTheme.darkGray,
                   foregroundColor: Colors.white,
@@ -216,9 +225,9 @@ class _MeditationScreenState extends State<MeditationScreen>
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Choose a track:',
-              style: TextStyle(
+            Text(
+              l10n.chooseTrack, // ✅ Translated
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.darkGray,

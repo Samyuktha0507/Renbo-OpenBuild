@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart'; 
-import 'package:intl/intl.dart'; // Make sure this package is added!
+import 'package:intl/intl.dart'; 
 import '../models/journal_entry.dart';
 import '../services/journal_storage.dart';
-import 'journal_detail.dart';
+import 'journal_detail.dart'; // Ensure filename is correct
 import 'journal_screen.dart'; 
 import '../utils/theme.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class JournalEntriesPage extends StatefulWidget {
   const JournalEntriesPage({Key? key}) : super(key: key);
@@ -16,13 +18,13 @@ class JournalEntriesPage extends StatefulWidget {
 
 class _JournalEntriesPageState extends State<JournalEntriesPage> {
   DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay; // ✅ 1. Starts as NULL (No selection)
+  DateTime? _selectedDay; 
   late Future<List<JournalEntry>> _entriesFuture;
 
   @override
   void initState() {
     super.initState();
-    _selectedDay = null; // Ensure no day is highlighted initially
+    _selectedDay = null; 
     _loadEntries();
   }
 
@@ -34,38 +36,42 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Format Today's Date: "Sunday, 28 Dec"
-    final todayStr = DateFormat('EEEE, d MMM').format(DateTime.now());
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+    
+    // ✅ Format Date with Locale
+    final todayStr = DateFormat('EEEE, d MMM', l10n.localeName).format(DateTime.now());
 
     return Scaffold(
       backgroundColor: AppTheme.oatMilk,
       appBar: AppBar(
-        title: const Text('Journal Calendar', style: TextStyle(color: AppTheme.espresso, fontWeight: FontWeight.bold)),
+        title: Text(l10n.journalCalendar, // ✅ Translated
+            style: const TextStyle(color: AppTheme.espresso, fontWeight: FontWeight.bold)),
         backgroundColor: AppTheme.oatMilk,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppTheme.espresso),
       ),
       
-      // FLOATING BUTTON (Always allows adding an entry)
+      // FLOATING BUTTON
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppTheme.matchaGreen,
         icon: const Icon(Icons.edit, color: Colors.white),
-        label: const Text("New Entry", style: TextStyle(color: Colors.white)),
+        label: Text(l10n.newEntry, // ✅ Translated
+            style: const TextStyle(color: Colors.white)),
         onPressed: () {
-          // ✅ 4. If no date picked, default to TODAY
           _navigateToNewEntry(_selectedDay ?? DateTime.now());
         },
       ),
 
       body: Column(
         children: [
-          // ✅ 2. HEADER: Shows Today's Date prominently
+          // HEADER
           Container(
             width: double.infinity,
             padding: const EdgeInsets.only(bottom: 10),
             alignment: Alignment.center,
             child: Text(
-              "Today is $todayStr",
+              l10n.todayIs(todayStr), // ✅ Translated
               style: TextStyle(
                 fontSize: 16, 
                 color: AppTheme.espresso.withOpacity(0.6), 
@@ -74,37 +80,28 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
             ),
           ),
 
-          // 📅 CALENDAR
+          // CALENDAR
           TableCalendar(
+            locale: l10n.localeName, // ✅ Ensure Calendar uses correct language
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
-            currentDay: DateTime.now(), // Marks today with a subtle indicator
-            
-            // Only highlight if _selectedDay is NOT null
+            currentDay: DateTime.now(), 
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            
-            // Force Month View (No 2-week button)
-            availableCalendarFormats: const { CalendarFormat.month: 'Month' }, 
+            availableCalendarFormats: { CalendarFormat.month: l10n.monthLabel }, // ✅ Translated 'Month'
             headerStyle: const HeaderStyle(
               formatButtonVisible: false, 
               titleCentered: true,
               titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.espresso),
             ),
-            
             calendarStyle: CalendarStyle(
-              // The Green Selection Circle
               selectedDecoration: const BoxDecoration(color: AppTheme.matchaGreen, shape: BoxShape.circle),
-              // Today's indicator (when not selected)
               todayDecoration: BoxDecoration(color: AppTheme.cocoa.withOpacity(0.3), shape: BoxShape.circle),
               todayTextStyle: const TextStyle(color: AppTheme.espresso, fontWeight: FontWeight.bold),
               defaultTextStyle: const TextStyle(color: AppTheme.espresso),
             ),
-
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
-                // Toggle selection: If tapping the same day, unselect it? 
-                // No, usually just select it.
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
               });
@@ -114,7 +111,7 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
           const SizedBox(height: 10),
           const Divider(),
 
-          // 📝 ENTRIES LIST
+          // ENTRIES LIST
           Expanded(
             child: FutureBuilder<List<JournalEntry>>(
               future: _entriesFuture,
@@ -122,14 +119,9 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
                 if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                 
                 final allEntries = snapshot.data!;
-                
-                // ✅ 3. FILTER LOGIC:
-                // If NO date is selected -> Show ALL entries (Reverse chronological)
-                // If date IS selected -> Show only that day's entries
                 List<JournalEntry> displayEntries;
                 
                 if (_selectedDay == null) {
-                  // Show all, sorted by newest first
                   displayEntries = List.from(allEntries);
                   displayEntries.sort((a, b) => b.timestamp.compareTo(a.timestamp));
                 } else {
@@ -149,8 +141,8 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
                           const SizedBox(height: 10),
                           Text(
                             _selectedDay == null 
-                                ? "No entries yet.\nStart your journey today!" 
-                                : "No entries for this day.\nTap here to write!",
+                                ? l10n.noEntriesYet // ✅ Translated
+                                : l10n.noEntriesForDay, // ✅ Translated
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppTheme.espresso.withOpacity(0.5)),
                           ),
@@ -165,7 +157,8 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
                   itemCount: displayEntries.length,
                   itemBuilder: (context, index) {
                     final entry = displayEntries[index];
-                    final entryDate = DateFormat('MMM d, h:mm a').format(entry.timestamp);
+                    // ✅ Format Entry Date with Locale
+                    final entryDate = DateFormat('MMM d, h:mm a', l10n.localeName).format(entry.timestamp);
 
                     return Card(
                       color: Colors.white,
@@ -173,7 +166,7 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
                       margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
                         title: Text(
-                          entry.title ?? "Untitled", 
+                          entry.title ?? l10n.untitled, // ✅ Translated
                           style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.espresso),
                         ),
                         subtitle: Text(

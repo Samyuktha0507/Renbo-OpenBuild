@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 import '../models/journal_entry.dart';
 import '../services/journal_storage.dart';
 import 'journal_screen.dart';
-import 'journal_entries.dart'; // Needed for navigation
+import 'journal_entries.dart'; 
 import '../utils/theme.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({Key? key}) : super(key: key);
@@ -18,16 +20,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   
-  // 🎭 Mood Emojis Map
-  final Map<String, String> _moodEmojis = {
-    'Happy': '😄',
-    'Sad': '😢',
-    'Angry': '😠',
-    'Confused': '🤔',
-    'Excited': '🥳',
-    'Calm': '😌',
-    'Neutral': '😐',
-  };
+  // We will build the mood map dynamically inside the build method
+  // so it updates when the language changes.
 
   @override
   void initState() {
@@ -37,12 +31,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final todayStr = DateFormat('EEEE, d MMM').format(DateTime.now());
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+    
+    // ✅ Format the date according to the current language
+    // We access the locale code (e.g., 'en' or 'es') from the localization object
+    final todayStr = DateFormat('EEEE, d MMM', l10n.localeName).format(DateTime.now());
 
     return Scaffold(
       backgroundColor: AppTheme.oatMilk,
       appBar: AppBar(
-        title: const Text('Journal Calendar', style: TextStyle(color: AppTheme.espresso, fontWeight: FontWeight.bold)),
+        title: Text(l10n.journalCalendar, // ✅ Translated
+            style: const TextStyle(color: AppTheme.espresso, fontWeight: FontWeight.bold)),
         backgroundColor: AppTheme.oatMilk,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppTheme.espresso),
@@ -52,9 +52,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppTheme.matchaGreen,
         icon: const Icon(Icons.edit, color: Colors.white),
-        label: const Text("New Entry", style: TextStyle(color: Colors.white)),
+        label: Text(l10n.newEntry, // ✅ Translated
+            style: const TextStyle(color: Colors.white)),
         onPressed: () {
-          _showMoodSelector(context, _selectedDay ?? DateTime.now());
+          _showMoodSelector(context, _selectedDay ?? DateTime.now(), l10n);
         },
       ),
 
@@ -66,7 +67,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             padding: const EdgeInsets.only(bottom: 10),
             alignment: Alignment.center,
             child: Text(
-              "Today is $todayStr",
+              l10n.todayIs(todayStr), // ✅ Translated with parameter
               style: TextStyle(
                 fontSize: 16, 
                 color: AppTheme.espresso.withOpacity(0.6), 
@@ -77,6 +78,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
           // 2. CALENDAR
           TableCalendar(
+            locale: l10n.localeName, // ✅ Sets the calendar language (Mon/Tue vs Lun/Mar)
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
@@ -100,7 +102,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 _focusedDay = focusedDay;
               });
               // Prompt for new entry immediately on tap
-              _showMoodSelector(context, selectedDay);
+              _showMoodSelector(context, selectedDay, l10n);
             },
           ),
           
@@ -119,7 +121,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 minimumSize: const Size(double.infinity, 55),
               ),
               icon: const Icon(Icons.history_edu, color: Colors.white),
-              label: const Text("View All Journal Entries", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              label: Text(l10n.viewAllEntries, // ✅ Translated
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -129,33 +132,45 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
           
-          const Spacer(), // Pushes everything up slightly
+          const Spacer(), 
         ],
       ),
     );
   }
   
-  // MOOD SELECTOR (Unchanged)
-  void _showMoodSelector(BuildContext context, DateTime selectedDate) {
+  // MOOD SELECTOR
+  void _showMoodSelector(BuildContext context, DateTime selectedDate, AppLocalizations l10n) {
+    // ✅ Define Mood Map here so it uses the current language
+    final Map<String, String> moodEmojis = {
+      l10n.moodHappy: '😄',
+      l10n.moodSad: '😢',
+      l10n.moodAngry: '😠',
+      l10n.moodConfused: '🤔',
+      l10n.moodExcited: '🥳',
+      l10n.moodCalm: '😌',
+      l10n.moodNeutral: '😐',
+    };
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: AppTheme.latteFoam,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            'How are you feeling?', 
+          title: Text(
+            l10n.howAreYouFeeling, // ✅ Translated
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.espresso, fontWeight: FontWeight.bold)
+            style: const TextStyle(color: AppTheme.espresso, fontWeight: FontWeight.bold)
           ),
           content: Wrap(
             spacing: 10.0,
             runSpacing: 10.0,
             alignment: WrapAlignment.center,
-            children: _moodEmojis.entries.map((entry) {
+            children: moodEmojis.entries.map((entry) {
               return InkWell(
                 onTap: () {
                   Navigator.of(dialogContext).pop();
+                  // We pass the key (e.g., "Happy" or "Feliz") to the next screen
                   _navigateToNewEntry(selectedDate, entry.key);
                 },
                 child: Column(
@@ -166,7 +181,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(15),
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, 2))]
+                        boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))]
                       ),
                       child: Text(entry.value, style: const TextStyle(fontSize: 28)),
                     ),

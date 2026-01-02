@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:renbo/utils/theme.dart';
 import 'package:renbo/widgets/chat_bubble.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class SavedThreadsScreen extends StatelessWidget {
   const SavedThreadsScreen({super.key});
@@ -10,14 +12,15 @@ class SavedThreadsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Saved Conversations',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(l10n.savedConversationsTitle, // ✅ Translated
+            style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Pulling from the specific collection you set up in JournalStorage
         stream: FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
@@ -37,8 +40,8 @@ class SavedThreadsScreen extends StatelessWidget {
                   Icon(Icons.history_edu_rounded,
                       size: 64, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
-                  const Text('No saved threads yet.',
-                      style: TextStyle(color: Colors.grey)),
+                  Text(l10n.noSavedThreads, // ✅ Translated
+                      style: const TextStyle(color: Colors.grey)),
                 ],
               ),
             );
@@ -50,8 +53,16 @@ class SavedThreadsScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final doc = snapshot.data!.docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              final title = data['title'] ?? 'Chat Session';
+              final title = data['title'] ?? l10n.defaultChatSession; // ✅ Translated
               final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
+
+              String dateText = "";
+              if (timestamp != null) {
+                final dateStr = "${timestamp.day}/${timestamp.month}";
+                final timeStr = "${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}";
+                // ✅ Uses translation format "Date at Time"
+                dateText = l10n.dateAtTime(dateStr, timeStr); 
+              }
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -65,19 +76,15 @@ class SavedThreadsScreen extends StatelessWidget {
                   ),
                   title: Text(title,
                       style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(timestamp != null
-                      ? "${timestamp.day}/${timestamp.month} at ${timestamp.hour}:${timestamp.minute}"
-                      : ""),
+                  subtitle: Text(dateText),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    // Navigate to view the actual messages
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => ThreadDetailView(
                           title: title,
-                          messages:
-                              List<Map<String, dynamic>>.from(data['messages']),
+                          messages: List<Map<String, dynamic>>.from(data['messages']),
                           docId: doc.id,
                         ),
                       ),
@@ -93,7 +100,6 @@ class SavedThreadsScreen extends StatelessWidget {
   }
 }
 
-// Simple Detail View to read the conversation
 class ThreadDetailView extends StatelessWidget {
   final String title;
   final List<Map<String, dynamic>> messages;
@@ -107,13 +113,16 @@ class ThreadDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-            onPressed: () => _confirmDelete(context),
+            onPressed: () => _confirmDelete(context, l10n), // Pass l10n
           )
         ],
       ),
@@ -140,16 +149,16 @@ class ThreadDetailView extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context) {
+  void _confirmDelete(BuildContext context, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Delete Thread?"),
-        content: const Text("This will permanently remove this conversation."),
+        title: Text(l10n.deleteThreadTitle), // ✅ Translated
+        content: Text(l10n.deleteThreadContent), // ✅ Translated
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel")),
+              child: Text(l10n.cancel)), // ✅ Translated
           TextButton(
             onPressed: () async {
               final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -159,10 +168,10 @@ class ThreadDetailView extends StatelessWidget {
                   .collection('saved_threads')
                   .doc(docId)
                   .delete();
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to list
+              Navigator.pop(context); 
+              Navigator.pop(context); 
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)), // ✅ Translated
           ),
         ],
       ),

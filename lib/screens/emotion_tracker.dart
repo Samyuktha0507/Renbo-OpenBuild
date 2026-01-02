@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'journal_screen.dart';
 import 'journal_entries.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class EmotionTrackerScreen extends StatelessWidget {
   const EmotionTrackerScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF5F2), // soft background
+      backgroundColor: const Color(0xFFFFF5F2), 
       appBar: AppBar(
         backgroundColor: const Color(0xFF568F87),
-        title: const Text("How are you feeling?",
-            style: TextStyle(color: Colors.white)),
+        title: Text(l10n.howAreYouFeeling, // ✅ Translated (Existing Key)
+            style: const TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
       body: Center(
@@ -23,13 +28,10 @@ class EmotionTrackerScreen extends StatelessWidget {
               spacing: 12,
               runSpacing: 12,
               children: [
-                _buildEmotionButton(context, "😊 Happy", "That's wonderful!"),
-                _buildEmotionButton(
-                    context, "😢 Sad", "I’m sorry you’re feeling this way."),
-                _buildEmotionButton(
-                    context, "😡 Angry", "It’s okay to feel upset."),
-                _buildEmotionButton(
-                    context, "😴 Tired", "Rest is important, take it easy."),
+                _buildEmotionButton(context, l10n.emotionHappy, l10n.msgHappy, l10n),
+                _buildEmotionButton(context, l10n.emotionSad, l10n.msgSad, l10n),
+                _buildEmotionButton(context, l10n.emotionAngry, l10n.msgAngry, l10n),
+                _buildEmotionButton(context, l10n.emotionTired, l10n.msgTired, l10n),
               ],
             ),
           ],
@@ -39,7 +41,7 @@ class EmotionTrackerScreen extends StatelessWidget {
   }
 
   Widget _buildEmotionButton(
-      BuildContext context, String label, String message) {
+      BuildContext context, String label, String message, AppLocalizations l10n) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFF5BABB),
@@ -63,7 +65,7 @@ class EmotionTrackerScreen extends StatelessWidget {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text("Would you like to journal these emotions?"),
+            title: Text(l10n.journalPrompt), // ✅ Translated
             actions: [
               TextButton(
                 onPressed: () {
@@ -71,11 +73,11 @@ class EmotionTrackerScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => JournalEntriesPage(),
+                      builder: (context) => const JournalEntriesPage(),
                     ),
                   );
                 },
-                child: const Text("No"),
+                child: Text(l10n.no), // ✅ Translated
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -88,11 +90,11 @@ class EmotionTrackerScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          JournalScreen(selectedDate: DateTime.now(), emotion: label), // pass emotion here
+                          JournalScreen(selectedDate: DateTime.now(), emotion: label), 
                     ),
                   );
                 },
-                child: const Text("Yes, Journal"),
+                child: Text(l10n.yesJournal), // ✅ Translated
               ),
             ],
           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:renbo/utils/theme.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class WhiteNoiseSynthesizerScreen extends StatefulWidget {
   const WhiteNoiseSynthesizerScreen({super.key});
@@ -66,9 +68,12 @@ class _WhiteNoiseSynthesizerScreenState
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('White Noise Synthesiser'),
+        title: Text(l10n.whiteNoiseTitle), // ✅ Translated
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.darkGray,
         elevation: 0,
@@ -77,9 +82,9 @@ class _WhiteNoiseSynthesizerScreenState
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const Text(
-              'Mix your desired frequency:',
-              style: TextStyle(
+            Text(
+              l10n.mixFrequency, // ✅ Translated
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.darkGray,
@@ -91,7 +96,7 @@ class _WhiteNoiseSynthesizerScreenState
                 itemCount: _noiseFrequencies.length,
                 itemBuilder: (context, index) {
                   final frequency = _noiseFrequencies[index];
-                  return _buildVolumeSlider(frequency);
+                  return _buildVolumeSlider(frequency, l10n); // Pass l10n
                 },
               ),
             ),
@@ -100,7 +105,7 @@ class _WhiteNoiseSynthesizerScreenState
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Go Back'),
+              child: Text(l10n.goBack), // ✅ Translated
             ),
           ],
         ),
@@ -108,14 +113,24 @@ class _WhiteNoiseSynthesizerScreenState
     );
   }
 
-  Widget _buildVolumeSlider(String frequency) {
+  Widget _buildVolumeSlider(String frequency, AppLocalizations l10n) {
+    // ✅ Dynamic mapping for labels
+    String label;
+    if (frequency == 'white') {
+      label = l10n.noiseWhite;
+    } else if (frequency == 'pink') {
+      label = l10n.noisePink;
+    } else {
+      label = l10n.noiseBrown;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${frequency.toUpperCase()} Noise',
+            label, // ✅ Translated Label
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

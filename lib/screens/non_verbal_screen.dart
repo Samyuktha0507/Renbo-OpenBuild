@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class NonVerbalSessionScreen extends StatefulWidget {
   const NonVerbalSessionScreen({super.key});
@@ -56,7 +58,6 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
   }
 
   Color _getMoodColor() {
-    // Maps intensity to a spectrum from Calm Blue to Energetic Orange/Red
     return Color.lerp(
       const Color(0xFF8E97FD), // Calm Purple/Blue
       const Color(0xFFFF8C69), // Warm Orange
@@ -66,6 +67,9 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+    
     // Clean up old points to keep performance high
     _points.removeWhere(
         (p) => DateTime.now().difference(p.timestamp).inMilliseconds > 2000);
@@ -73,7 +77,7 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Zen Space", style: TextStyle(fontFamily: 'Poppins')),
+        title: Text(l10n.zenSpaceTitle, style: const TextStyle(fontFamily: 'Poppins')), // ✅ Translated
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -113,7 +117,7 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  "Tap to ripple, Hold to glow",
+                  l10n.zenInstructions, // ✅ Translated
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
               ),
@@ -128,9 +132,10 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
             child: Column(
               children: [
                 Text(
+                  // ✅ Dynamic Translation for Intensity
                   _intensity < 0.3
-                      ? "Quiet"
-                      : (_intensity < 0.7 ? "Steady" : "Vibrant"),
+                      ? l10n.zenQuiet
+                      : (_intensity < 0.7 ? l10n.zenSteady : l10n.zenVibrant),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: _getMoodColor(),

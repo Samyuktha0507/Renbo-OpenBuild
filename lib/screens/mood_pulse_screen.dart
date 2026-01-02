@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:renbo/utils/theme.dart';
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class MoodPulseScreen extends StatefulWidget {
   const MoodPulseScreen({super.key});
@@ -14,75 +16,77 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
   double _valence = 0.5; // Sentiment: Negative to Positive
   double _clarity = 0.5; // Cognitive: Foggy to Clear
 
-  String _aiFeedback = "Move the sliders to show how you're feeling right now.";
-  String _comfortAdvice = "We can take it one step at a time.";
+  // These will be updated dynamically
+  String _aiFeedback = ""; 
+  String _comfortAdvice = "";
 
-  // Dynamic feedback based on Intensity, Valence, and Clarity
-  void _updateFeedback() {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Initialize text on first load using current locale
+    final l10n = AppLocalizations.of(context)!;
+    if (_aiFeedback.isEmpty) {
+        _aiFeedback = l10n.defaultFeedback;
+        _comfortAdvice = l10n.defaultAdvice;
+    }
+  }
+
+  // ✅ Dynamic feedback logic using Translations
+  void _updateFeedback(AppLocalizations l10n) {
     setState(() {
       // 1. DISTRESSED / OVERWHELMED (Negative + High Intensity)
       if (_valence < 0.4 && _intensity > 0.6) {
         if (_clarity < 0.4) {
-          _aiFeedback =
-              "Everything feels loud and blurry right now. It's high-intensity chaos.";
-          _comfortAdvice =
-              "Advice: Your only job right now is to breathe. Try the 5-4-3-2-1 grounding technique: name 5 things you see, 4 things you can touch.";
+          _aiFeedback = l10n.feedbackOverwhelmed;
+          _comfortAdvice = l10n.adviceGrounding;
         } else {
-          _aiFeedback =
-              "You're feeling a sharp, clear sense of distress or frustration.";
-          _comfortAdvice =
-              "Advice: This energy needs an exit. Try a 'cold water shock' on your face or a quick, vigorous movement to reset your nervous system.";
+          _aiFeedback = l10n.feedbackSharp;
+          _comfortAdvice = l10n.adviceExitEnergy;
         }
       }
       // 2. HEAVY / NUMB (Negative + Low Intensity)
       else if (_valence < 0.4 && _intensity <= 0.6) {
         if (_clarity < 0.4) {
-          _aiFeedback =
-              "You're carrying a heavy, foggy weight. It feels hard to even identify the 'why'.";
-          _comfortAdvice =
-              "Advice: Don't fight the fog. Just focus on small comforts—a warm drink, a soft blanket, or dimming the lights.";
+          _aiFeedback = l10n.feedbackHeavy;
+          _comfortAdvice = l10n.adviceComfort;
         } else {
-          _aiFeedback =
-              "There is a quiet, clear sadness or disappointment present.";
-          _comfortAdvice =
-              "Advice: It's okay to sit with this. Try writing down just three words that describe this weight. Validating it helps it pass.";
+          _aiFeedback = l10n.feedbackSadness;
+          _comfortAdvice = l10n.adviceValidate;
         }
       }
       // 3. SCATTERED / TIRED (Neutral + Foggy)
       else if (_valence >= 0.4 && _valence <= 0.6 && _clarity < 0.4) {
-        _aiFeedback =
-            "You're in a bit of a mental haze. Things feel a bit disconnected.";
-        _comfortAdvice =
-            "Advice: Your brain might be overstimulated. Try a 10-minute 'digital fast'—put the phone away and look at something distant out a window.";
+        _aiFeedback = l10n.feedbackHaze;
+        _comfortAdvice = l10n.adviceDigitalFast;
       }
       // 4. PEACEFUL / FOCUSED (Positive + Clear)
       else if (_valence > 0.6 && _clarity > 0.6) {
-        _aiFeedback = "You're in a beautiful state of flow and clarity.";
-        _comfortAdvice =
-            "Advice: This is a great time for creativity or connection. Carry this light with you into your next task.";
+        _aiFeedback = l10n.feedbackFlow;
+        _comfortAdvice = l10n.adviceCreativity;
       }
       // 5. CALM / DREAMY (Positive + Foggy)
       else if (_valence > 0.6 && _clarity <= 0.6) {
-        _aiFeedback = "You're feeling a gentle, dreamy kind of happiness.";
-        _comfortAdvice =
-            "Advice: Let yourself daydream. You don't need to be productive right now. Just enjoy the warmth.";
+        _aiFeedback = l10n.feedbackDreamy;
+        _comfortAdvice = l10n.adviceDaydream;
       }
       // DEFAULT
       else {
-        _aiFeedback = "You're finding your balance in a steady, middle space.";
-        _comfortAdvice =
-            "Advice: Keep checking in with your body. Notice if your shoulders are tense and let them drop.";
+        _aiFeedback = l10n.feedbackBalanced;
+        _comfortAdvice = l10n.adviceCheckBody;
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title:
-            const Text("Mood Pulse", style: TextStyle(fontFamily: 'Poppins')),
+        title: Text(l10n.moodPulseTitle, // ✅ Translated
+            style: const TextStyle(fontFamily: 'Poppins')),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -113,7 +117,7 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
                       boxShadow: [
                         BoxShadow(
                           color: _getMoodColor(_valence).withOpacity(0.4),
-                          // Blur is now tied to Clarity: Foggy (low clarity) = more blur
+                          // Blur is now tied to Clarity
                           blurRadius: 20 + ((1 - _clarity) * 40),
                           spreadRadius: 5 + (value * 10),
                         )
@@ -174,26 +178,26 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
               ),
               const SizedBox(height: 30),
 
-              // 1. CLARITY SLIDER (Foggy to Clear)
-              _buildSliderLabel("Foggy", "Clear"),
+              // 1. CLARITY SLIDER
+              _buildSliderLabel(l10n.labelFoggy, l10n.labelClear), // ✅ Translated
               _buildSlider(
                 value: _clarity,
-                onChanged: (val) => setState(() {
-                  _clarity = val;
-                  _updateFeedback();
-                }),
+                onChanged: (val) {
+                   _clarity = val;
+                   _updateFeedback(l10n); // Pass l10n to update text
+                },
                 gradient: const [Colors.blueGrey, Colors.cyanAccent],
               ),
               const SizedBox(height: 25),
 
-              // 2. VALENCE SLIDER (Negative to Positive)
-              _buildSliderLabel("Negative", "Positive"),
+              // 2. VALENCE SLIDER
+              _buildSliderLabel(l10n.labelNegative, l10n.labelPositive), // ✅ Translated
               _buildSlider(
                 value: _valence,
-                onChanged: (val) => setState(() {
-                  _valence = val;
-                  _updateFeedback();
-                }),
+                onChanged: (val) {
+                   _valence = val;
+                   _updateFeedback(l10n);
+                },
                 gradient: const [
                   Colors.blueGrey,
                   Colors.blueAccent,
@@ -203,14 +207,14 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
               ),
               const SizedBox(height: 25),
 
-              // 3. INTENSITY SLIDER (Soft to Intense)
-              _buildSliderLabel("Soft Energy", "High Intensity"),
+              // 3. INTENSITY SLIDER
+              _buildSliderLabel(l10n.labelSoftEnergy, l10n.labelHighIntensity), // ✅ Translated
               _buildSlider(
                 value: _intensity,
-                onChanged: (val) => setState(() {
-                  _intensity = val;
-                  _updateFeedback();
-                }),
+                onChanged: (val) {
+                   _intensity = val;
+                   _updateFeedback(l10n);
+                },
                 gradient: [
                   _getMoodColor(_valence).withOpacity(0.5),
                   _getMoodColor(_valence)
@@ -228,8 +232,8 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),
-                child: const Text("I feel heard",
-                    style: TextStyle(color: Color(0xFF8E97FD))),
+                child: Text(l10n.btnFeelHeard, // ✅ Translated
+                    style: const TextStyle(color: Color(0xFF8E97FD))),
               ),
             ],
           ),
@@ -258,7 +262,7 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
 
   Widget _buildSlider({
     required double value,
-    required ValueChanged<double> onChanged,
+    required Function(double) onChanged, // Simplified type definition
     required List<Color> gradient,
   }) {
     return Container(

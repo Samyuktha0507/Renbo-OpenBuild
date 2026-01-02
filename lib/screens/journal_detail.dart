@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/journal_entry.dart';
 import '../utils/theme.dart';
-import 'journal_screen.dart'; // ✅ Import this to navigate to Edit
+import 'journal_screen.dart'; 
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class JournalDetailScreen extends StatefulWidget {
   final JournalEntry entry;
@@ -38,6 +40,9 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+    
     final dateStr = "${widget.entry.timestamp.day}/${widget.entry.timestamp.month}/${widget.entry.timestamp.year}";
     
     // Calculate Canvas Height
@@ -55,7 +60,6 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: AppTheme.espresso),
         actions: [
-          // ✅ EDIT BUTTON
           IconButton(
             icon: const Icon(Icons.edit, color: AppTheme.matchaGreen),
             onPressed: () {
@@ -65,7 +69,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
                   builder: (context) => JournalScreen(
                     selectedDate: widget.entry.timestamp,
                     emotion: widget.entry.emotion ?? "Neutral",
-                    existingEntry: widget.entry, // ✅ PASS THE ENTRY TO EDIT
+                    existingEntry: widget.entry, 
                   ),
                 ),
               );
@@ -92,7 +96,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.entry.title ?? "Untitled",
+                    widget.entry.title ?? l10n.untitled, // ✅ Translated Fallback
                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.espresso),
                   ),
                   const SizedBox(height: 10),

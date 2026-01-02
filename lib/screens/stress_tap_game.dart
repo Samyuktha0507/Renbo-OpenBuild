@@ -1,24 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const Gameu());
-}
-
-class Gameu extends StatelessWidget {
-  const Gameu({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Gameu',
-      theme: ThemeData.dark(),
-      debugShowCheckedModeBanner: false,
-      home: const RelaxGame(),
-    );
-  }
-}
+// ✅ Import Translations
+import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class RelaxGame extends StatefulWidget {
   const RelaxGame({super.key});
@@ -41,6 +25,9 @@ class _RelaxGameState extends State<RelaxGame> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Helper for translations
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -58,15 +45,15 @@ class _RelaxGameState extends State<RelaxGame> {
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Text(
-                  'Tap the ball to move it.',
-                  style: TextStyle(fontSize: 24, color: Colors.black54),
+                  l10n.tapToMove, // ✅ Translated
+                  style: const TextStyle(fontSize: 24, color: Colors.black54),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Text(
-                  'Just relax and enjoy.',
-                  style: TextStyle(fontSize: 18, color: Colors.black45),
+                  l10n.relaxAndEnjoy, // ✅ Translated
+                  style: const TextStyle(fontSize: 18, color: Colors.black45),
                 ),
               ],
             ),
