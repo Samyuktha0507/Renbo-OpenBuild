@@ -18,6 +18,30 @@ class AppLocalizationsTe extends AppLocalizations {
   String get selectLanguage => 'భాషను ఎంచుకోండి';
 
   @override
+  String get accountDetails => 'Account Details';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get analytics => 'Analytics';
+
+  @override
+  String get wellnessDashboard => 'Wellness Dashboard';
+
+  @override
+  String get viewTrends => 'View your mental health trends';
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get logout => 'Log Out';
+
+  @override
   String helloUser(String userName) {
     return 'నమస్తే, $userName!';
   }

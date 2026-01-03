@@ -18,25 +18,27 @@ class GeminiService {
   GeminiService()
       : _model = GenerativeModel(
           // Use the stable alias for the most current Flash model
-          model: 'gemini-2.5-flash',
+          model: 'gemini-2.5-flash-lite',
           apiKey: AppConstants.geminiApiKey,
-          // FORCE the use of v1 to avoid the "model not found" v1beta error
-          // Note: If your SDK version doesn't support apiVersion in the constructor,
-          // ensure you have upgraded google_generative_ai to the latest version.
         );
 
-  Future<GeminiClassifiedResponse> generateAndClassify(String prompt) async {
+  /// Updated to accept languageName to match the call in ChatScreen
+  Future<GeminiClassifiedResponse> generateAndClassify(
+      String prompt, String languageName) async {
     try {
-final systemPrompt = """
+      final systemPrompt = """
 You are Renbot, a supportive and non-judgmental AI assistant. Your role is to provide a safe space for users to express their thoughts and feelings. 
-First, create an empathetic and supportive response to the user's message. 
-Second, classify the user's message for self-harm or suicidal ideation.
+
+*Instructions:*
+1. Create an empathetic and supportive response to the user's message. 
+2. Classify the user's message for self-harm or suicidal ideation.
+3. Language: The user has selected $languageName. You MUST reply in $languageName.
+4. If the user communicates in regional language using english, you must reply using the same.
 
 *Core Principles:*
 - Be calm, neutral, and non-judgmental.
 - Listen and validate the user's feelings.
 - Keep replies simple, crisp, and conversational.
-- If the user uses a regional Indian language, reply in that same language.
 - If the conversation is concluding, provide parting support.
 
 *Safety Classification:*
@@ -45,7 +47,7 @@ Second, classify the user's message for self-harm or suicidal ideation.
 You MUST respond in valid JSON format:
 {
   "isHarmful": boolean,
-  "response": "your empathetic message here"
+  "response": "your empathetic message here in $languageName"
 }
 
 User's message: "$prompt"
@@ -70,7 +72,6 @@ User's message: "$prompt"
       return GeminiClassifiedResponse();
     } catch (e) {
       print("Gemini API Error: $e");
-      // If 'gemini-2.5-flash' still fails, try 'gemini-1.5-flash-latest'
       return GeminiClassifiedResponse(
         response: "I'm having trouble connecting to my brain right now. 😞",
       );

@@ -25,6 +25,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
+    // Check if audio file exists before attempting to load
     if (widget.entry.audioPath != null &&
         File(widget.entry.audioPath!).existsSync()) {
       _audioPlayer.setFilePath(widget.entry.audioPath!);
@@ -53,23 +54,23 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
     final dateStr =
         "${widget.entry.timestamp.day}/${widget.entry.timestamp.month}/${widget.entry.timestamp.year}";
 
-    // Calculate Canvas Height based on sticker positions
+    // Calculate Canvas Height dynamically based on sticker positions to ensure scrollability
     double maxStickerY = 0;
     for (var s in _stickers) {
       if (s.y > maxStickerY) maxStickerY = s.y;
     }
-    double requiredHeight = maxStickerY + 200;
+    double requiredHeight = maxStickerY + 250;
 
     return Scaffold(
-      backgroundColor: scaffoldBg, // Dynamic BG
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
         title: Text(dateStr,
-            style: TextStyle(color: textColor)), // Dynamic text color
-        backgroundColor: scaffoldBg, // Dynamic App Bar BG
+            style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
+        backgroundColor: scaffoldBg,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
         actions: [
-          // ✅ EDIT BUTTON
+          // ✅ EDIT BUTTON: Navigates to JournalScreen in Edit Mode
           IconButton(
             icon: Icon(Icons.edit, color: primaryGreen),
             onPressed: () {
@@ -91,7 +92,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
       body: SingleChildScrollView(
         child: Stack(
           children: [
-            // Spacer for scroll height
+            // Invisible spacer to expand the Stack height for stickers
             Container(
               height: requiredHeight < MediaQuery.of(context).size.height
                   ? MediaQuery.of(context).size.height
@@ -99,63 +100,85 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
               width: double.infinity,
             ),
 
-            // Content
+            // Main Journal Content
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.entry.title ?? l10n.untitled, // ✅ Translated Fallback
+                    widget.entry.title ?? l10n.untitled, // ✅ Localized fallback
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: textColor, // Dynamic text color
+                      color: textColor,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
+
                   // Emotion Badge
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                         color: primaryGreen,
                         borderRadius: BorderRadius.circular(20)),
                     child: Text(
                       widget.entry.emotion ?? "Neutral",
                       style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
+
                   Text(
                     widget.entry.content,
                     style: TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                      color: textColor, // Dynamic text color
+                      fontSize: 17,
+                      height: 1.6,
+                      color: textColor?.withOpacity(0.9),
                     ),
                   ),
+
+                  // Audio Player Section
                   if (_audioAvailable) ...[
-                    const SizedBox(height: 20),
-                    IconButton(
-                      icon: Icon(Icons.play_circle_fill,
-                          size: 40, color: primaryGreen),
-                      onPressed: _audioPlayer.play,
+                    const SizedBox(height: 30),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.play_circle_fill,
+                              size: 50, color: primaryGreen),
+                          onPressed: _audioPlayer.play,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(l10n.toolVoice, // Reusing localized 'Voice' label
+                            style:
+                                TextStyle(color: textColor?.withOpacity(0.6))),
+                      ],
                     ),
                   ],
-                  if (widget.entry.imagePath != null) ...[
-                    const SizedBox(height: 20),
+
+                  // Image Section
+                  if (widget.entry.imagePath != null &&
+                      widget.entry.imagePath!.isNotEmpty) ...[
+                    const SizedBox(height: 30),
                     ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.file(File(widget.entry.imagePath!))),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.file(
+                        File(widget.entry.imagePath!),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox.shrink(),
+                      ),
+                    ),
                   ],
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 120), // Bottom padding for stickers
                 ],
               ),
             ),
 
-            // Stickers
+            // Sticker Overlay Layer
             ..._stickers.map((sticker) {
               return Positioned(
                 left: sticker.x,
@@ -175,5 +198,6 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
     );
   }
 
+  // Helper to distinguish between emoji strings and asset paths
   bool _isEmoji(String text) => !text.startsWith('assets/');
 }

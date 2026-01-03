@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:renbo/api/gemini_service.dart';
 import 'package:renbo/utils/theme.dart';
 import 'package:renbo/widgets/chat_bubble.dart';
-import 'package:renbo/services/journal_storage.dart';
 import 'package:renbo/screens/saved_threads_screen.dart';
-import 'hotlines_screen.dart';
-// ✅ Import Translations
-import 'package:renbo/l10n/gen/app_localizations.dart';
+import 'package:renbo/services/analytics_service.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final String? threadId;
+  final String? existingTitle;
+
+  const ChatScreen({super.key, this.threadId, this.existingTitle});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -21,284 +23,402 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final GeminiService _geminiService = GeminiService();
-
-  final List<Map<String, String>> _messages = [];
-  bool _isLoading = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final SpeechToText _speechToText = SpeechToText();
+  final FlutterTts _flutterTts = FlutterTts();
+
   bool _isListening = false;
   bool _speechEnabled = false;
+  bool _isLoading = false;
+  bool _isProcessingResult = false;
+  bool _hasUnsavedChanges = false;
 
-  final FlutterTts _flutterTts = FlutterTts();
+  String? _currentThreadId;
+  String _selectedLanguageName = "English";
+  String _selectedLocaleId = "en-US";
+
+  final Map<String, String> _languageLocales = {
+    'English': 'en-US',
+    'Hindi': 'hi-IN',
+    'Tamil': 'ta-IN',
+    'Telugu': 'te-IN',
+  };
 
   @override
   void initState() {
     super.initState();
+    AnalyticsService.startFeatureSession();
+    _currentThreadId = widget.threadId;
     _initSpeech();
+    _setupTts();
   }
 
   @override
   void dispose() {
+    AnalyticsService.endFeatureSession("Chat");
     _controller.dispose();
     _scrollController.dispose();
-    _speechToText.stop();
     _flutterTts.stop();
+    _speechToText.stop();
     super.dispose();
   }
 
   void _initSpeech() async {
-    try {
-      _speechEnabled = await _speechToText.initialize();
-      if (mounted) setState(() {});
-    } catch (e) {
-      debugPrint("Speech init failed: $e");
-    }
+    _speechEnabled = await _speechToText.initialize(
+      onError: (val) => debugPrint('STT Error: $val'),
+      onStatus: (status) {
+        if (status == 'notListening' || status == 'done') {
+          if (mounted) setState(() => _isListening = false);
+        }
+      },
+    );
+    if (mounted) setState(() {});
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+  Future<void> _setupTts() async {
+    await _flutterTts.setSharedInstance(true);
+    await _flutterTts.setIosAudioCategory(
+      IosTextToSpeechAudioCategory.playback,
+      [IosTextToSpeechAudioCategoryOptions.defaultToSpeaker],
+    );
   }
 
-  Future<bool> _showEndSessionDialog(AppLocalizations l10n) async {
-    if (_messages.isEmpty) return true;
+  Future<bool> _onWillPop() async {
+    if (!_hasUnsavedChanges) return true;
 
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final result = await showDialog<bool>(
+    final result = await showDialog<String>(
       context: context,
-      barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: theme.colorScheme.surface, // Adaptive Background
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          l10n.endSession, // ✅ Translated
-          style: TextStyle(color: theme.textTheme.titleLarge?.color),
-        ),
-        content: Text(
-          l10n.saveThreadQuestion, // ✅ Translated
-          style: TextStyle(color: theme.textTheme.bodyMedium?.color),
-        ),
+        title: const Text("Save Conversation?"),
+        content: const Text(
+            "Would you like to keep this chat thread in your history?"),
         actions: [
           TextButton(
-            onPressed: () {
-              JournalStorage.deleteTemporaryChat();
-              Navigator.pop(context, true);
-            },
-            child: Text(l10n.discard,
-                style: const TextStyle(color: Colors.red)), // ✅ Translated
+            onPressed: () => Navigator.pop(context, 'discard'),
+            child: const Text("Discard", style: TextStyle(color: Colors.red)),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final dateStr =
-                  "${DateTime.now().day}/${DateTime.now().month} ${DateTime.now().hour}:${DateTime.now().minute}";
-
-              await JournalStorage.saveChatThread(
-                messages: _messages,
-                summary: l10n.sessionDefaultTitle(dateStr), // ✅ Translated
-              );
-              if (mounted) Navigator.pop(context, true);
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary),
-            child: Text(
-              l10n.saveThread, // ✅ Translated
-              style: TextStyle(
-                  color: isDark ? AppTheme.darkBackground : Colors.white),
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'save'),
+            child: const Text("Save"),
           ),
         ],
       ),
     );
-    return result ?? false;
+
+    if (result == 'save') {
+      await _promptAndSaveThreadName();
+      return true;
+    } else if (result == 'discard') {
+      if (widget.threadId == null && _currentThreadId != null) {
+        await _deleteCurrentThread();
+      }
+      return true;
+    }
+    return false;
   }
 
-  void _sendMessage(AppLocalizations l10n) async {
+  Future<void> _promptAndSaveThreadName() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null || _currentThreadId == null) return;
+
+    final nameController = TextEditingController();
+    String? chosenName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Name your thread"),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: "Enter name (optional)",
+            helperText: "Leave blank for default (Thread-X)",
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, ""),
+              child: const Text("Skip")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, nameController.text.trim()),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+
+    String finalTitle = chosenName ?? "";
+    if (finalTitle.isEmpty) {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('saved_threads')
+          .get();
+      finalTitle = "Thread-${snapshot.docs.length}";
+    }
+
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('saved_threads')
+        .doc(_currentThreadId)
+        .update({'title': finalTitle});
+  }
+
+  Future<void> _deleteCurrentThread() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid != null && _currentThreadId != null) {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('saved_threads')
+          .doc(_currentThreadId)
+          .delete();
+    }
+  }
+
+  Future<String> _ensureThreadExists() async {
+    if (_currentThreadId != null) return _currentThreadId!;
+    final uid = _auth.currentUser!.uid;
+
+    final threadDoc = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('saved_threads')
+        .add({
+      'title': 'New Chat...',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    setState(() => _currentThreadId = threadDoc.id);
+    return threadDoc.id;
+  }
+
+  void _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
     setState(() {
-      _messages.add({'sender': 'user', 'text': text});
       _isLoading = true;
+      _isListening = false;
     });
     _controller.clear();
-    _scrollToBottom();
 
     try {
-      final classifiedResponse = await _geminiService.generateAndClassify(text);
-      if (mounted) {
-        setState(() {
-          _messages.add({'sender': 'bot', 'text': classifiedResponse.response});
-          _isLoading = false;
-        });
-        _scrollToBottom();
-        if (classifiedResponse.isHarmful) _showHotlineSuggestion(l10n);
-      }
+      final threadId = await _ensureThreadExists();
+      final uid = _auth.currentUser!.uid;
+
+      // 1. Save User Message
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('saved_threads')
+          .doc(threadId)
+          .collection('messages')
+          .add({
+        'text': text,
+        'sender': 'user',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Get AI Response
+      // Note: If your GeminiService only takes 1 argument, remove _selectedLanguageName
+      final response =
+          await _geminiService.generateAndClassify(text, _selectedLanguageName);
+
+      // 3. Save Bot Message
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('saved_threads')
+          .doc(threadId)
+          .collection('messages')
+          .add({
+        'text': response.response,
+        'sender': 'bot',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      setState(() {
+        _isLoading = false;
+        _hasUnsavedChanges = true;
+        _isProcessingResult = false;
+      });
+      _scrollToBottom();
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _messages.add(
-              {'sender': 'bot', 'text': l10n.connectionError}); // ✅ Translated
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+        _isProcessingResult = false;
+      });
+      debugPrint("Chat Error: $e");
     }
   }
 
-  void _showHotlineSuggestion(AppLocalizations l10n) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: theme.colorScheme.surface,
-        title: Text(l10n.youAreNotAlone, // ✅ Translated
-            style: TextStyle(color: theme.textTheme.titleLarge?.color)),
-        content: Text(l10n.hotlineQuestion, // ✅ Translated
-            style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n.notNow)), // ✅ Translated
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary),
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => HotlinesScreen()));
-            },
-            child: Text(l10n.viewHotlines, // ✅ Translated
-                style: TextStyle(
-                    color: isDark ? AppTheme.darkBackground : Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _toggleListening(AppLocalizations l10n) async {
+  void _toggleListening() async {
     if (!_speechEnabled) return;
     if (_isListening) {
       await _speechToText.stop();
       setState(() => _isListening = false);
     } else {
       setState(() => _isListening = true);
-      await _speechToText.listen(onResult: (result) {
-        setState(() => _controller.text = result.recognizedWords);
-        if (result.finalResult) {
-          setState(() => _isListening = false);
-          _sendMessage(l10n);
-        }
-      });
+      await _speechToText.listen(
+        localeId: _selectedLocaleId.replaceAll('-', '_'),
+        onResult: (result) {
+          setState(() => _controller.text = result.recognizedWords);
+          if (result.finalResult && !_isProcessingResult) {
+            _isProcessingResult = true;
+            _sendMessage();
+          }
+        },
+      );
     }
+  }
+
+  Future<void> _speak(String text) async {
+    await _flutterTts.setLanguage(_selectedLocaleId);
+    await _flutterTts.speak(text);
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _showLanguagePicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: _languageLocales.keys.map((lang) {
+          return ListTile(
+            leading: const Icon(Icons.language),
+            title: Text(lang),
+            onTap: () {
+              setState(() {
+                _selectedLanguageName = lang;
+                _selectedLocaleId = _languageLocales[lang]!;
+              });
+              Navigator.pop(context);
+            },
+          );
+        }).toList(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Helper for translations & Theme
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final textColor = theme.textTheme.bodyLarge?.color;
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        final shouldExit = await _showEndSessionDialog(l10n);
-        if (shouldExit && mounted) Navigator.of(context).pop();
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
       },
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor, // Adaptive background
         appBar: AppBar(
-          centerTitle: true,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text(l10n.chatTitle, // ✅ Translated
-              style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
-          iconTheme: IconThemeData(color: textColor),
+          title: Text(widget.existingTitle ?? 'Renbot Chat'),
           actions: [
             IconButton(
-              icon: const Icon(Icons.history_edu_rounded),
-              tooltip: l10n.savedThreads, // ✅ Translated
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SavedThreadsScreen()),
-              ),
+              icon: const Icon(Icons.history_rounded,
+                  color: AppTheme.primaryColor),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SavedThreadsScreen()),
+                );
+              },
+            ),
+            TextButton.icon(
+              onPressed: _showLanguagePicker,
+              icon: const Icon(Icons.translate, size: 18),
+              label: Text(_selectedLanguageName),
             ),
           ],
         ),
         body: Column(
           children: [
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(16),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  final isSender = message['sender'] == 'user';
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
-                      mainAxisAlignment: isSender
-                          ? MainAxisAlignment.end
-                          : MainAxisAlignment.start,
-                      children: [
-                        Flexible(
-                          child: ChatBubble(
-                              text: message['text']!, isSender: isSender),
-                        ),
-                        if (!isSender)
-                          IconButton(
-                            icon: Icon(Icons.volume_up,
-                                size: 18,
-                                color: theme.colorScheme.secondary
-                                    .withOpacity(0.6)),
-                            onPressed: () =>
-                                _flutterTts.speak(message['text']!),
-                          ),
-                      ],
+              child: _currentThreadId == null
+                  ? const Center(child: Text("Say hello to start a session!"))
+                  : StreamBuilder<QuerySnapshot>(
+                      stream: _firestore
+                          .collection('users')
+                          .doc(_auth.currentUser?.uid)
+                          .collection('saved_threads')
+                          .doc(_currentThreadId)
+                          .collection('messages')
+                          .orderBy('timestamp', descending: false)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError)
+                          return const Center(
+                              child: Text("Error loading messages"));
+                        if (!snapshot.hasData)
+                          return const Center(
+                              child: CircularProgressIndicator());
+
+                        final docs = snapshot.data!.docs;
+                        WidgetsBinding.instance
+                            .addPostFrameCallback((_) => _scrollToBottom());
+
+                        return ListView.builder(
+                          controller: _scrollController,
+                          itemCount: docs.length,
+                          itemBuilder: (context, index) {
+                            final data =
+                                docs[index].data() as Map<String, dynamic>;
+                            bool isBot = data['sender'] == 'bot';
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4, horizontal: 16),
+                              child: Row(
+                                mainAxisAlignment: isBot
+                                    ? MainAxisAlignment.start
+                                    : MainAxisAlignment.end,
+                                children: [
+                                  if (isBot)
+                                    IconButton(
+                                      icon:
+                                          const Icon(Icons.volume_up, size: 18),
+                                      onPressed: () =>
+                                          _speak(data['text'] ?? ""),
+                                    ),
+                                  Flexible(
+                                    child: ChatBubble(
+                                      text: data['text'] ?? "",
+                                      isSender: !isBot,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
-            if (_isLoading)
-              const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator()),
-            _buildMessageComposer(l10n), // Pass l10n
+            if (_isLoading) const LinearProgressIndicator(),
+            _buildComposer(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMessageComposer(AppLocalizations l10n) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
+  Widget _buildComposer() {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface, // Adaptive surface
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          )
-        ],
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.black12)),
       ),
       child: SafeArea(
         child: Row(
@@ -306,32 +426,25 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: TextField(
                 controller: _controller,
-                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                onSubmitted: (_) => _sendMessage(),
                 decoration: InputDecoration(
-                  hintText: _isListening
-                      ? l10n.listening
-                      : l10n.messageHint, // ✅ Translated
-                  hintStyle: TextStyle(
-                      color: theme.textTheme.bodyMedium?.color
-                          ?.withOpacity(0.5)),
-                  filled: true,
-                  fillColor: isDark
-                      ? AppTheme.darkBackground
-                      : AppTheme.lightGray, // Adaptive input fill
+                  hintText: _isListening ? "Listening..." : "Message...",
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
-                      borderSide: BorderSide.none),
+                      borderRadius: BorderRadius.circular(30)),
                 ),
               ),
             ),
             IconButton(
-              icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
-                  color: _isListening ? Colors.red : theme.colorScheme.primary),
-              onPressed: () => _toggleListening(l10n),
+              icon: Icon(
+                _isListening ? Icons.mic : Icons.mic_none,
+                color: _isListening ? Colors.red : AppTheme.primaryColor,
+              ),
+              onPressed: _toggleListening,
             ),
             IconButton(
-              icon: Icon(Icons.send, color: theme.colorScheme.primary),
-              onPressed: () => _sendMessage(l10n),
+              icon: const Icon(Icons.send, color: AppTheme.primaryColor),
+              onPressed: _sendMessage,
             ),
           ],
         ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:renbo/utils/theme.dart';
+// ✅ Import Tracking Service
+import 'package:renbo/services/analytics_service.dart';
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
@@ -21,6 +23,13 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
   String _comfortAdvice = "";
 
   @override
+  void initState() {
+    super.initState();
+    // ✅ START TRACKING SESSION
+    AnalyticsService.startFeatureSession();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Initialize text on first load using current locale
@@ -29,6 +38,13 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
       _aiFeedback = l10n.defaultFeedback;
       _comfortAdvice = l10n.defaultAdvice;
     }
+  }
+
+  @override
+  void dispose() {
+    // ✅ END TRACKING SESSION
+    AnalyticsService.endFeatureSession("Mood Pulse");
+    super.dispose();
   }
 
   // ✅ Dynamic feedback logic using Translations
@@ -89,9 +105,9 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // Adaptive background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(l10n.moodPulseTitle, // ✅ Translated
+        title: Text(l10n.moodPulseTitle,
             style: TextStyle(
                 color: textColor,
                 fontWeight: FontWeight.bold,
@@ -126,7 +142,6 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          // Blur tied to Clarity: Foggy (low clarity) = more blur
                           color: _getMoodColor(_valence)
                               .withOpacity(isDark ? 0.6 : 0.4),
                           blurRadius: 20 + ((1 - _clarity) * 40),
@@ -157,7 +172,7 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
                   key: ValueKey(_aiFeedback),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: surfaceColor, // Uses Coffee Bean in Dark Mode
+                    color: surfaceColor,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: textColor!.withOpacity(0.1)),
                   ),
@@ -190,19 +205,20 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
               const SizedBox(height: 30),
 
               // 1. CLARITY SLIDER
-              _buildSliderLabel(l10n.labelFoggy, l10n.labelClear, textColor), // ✅ Translated
+              _buildSliderLabel(l10n.labelFoggy, l10n.labelClear, textColor),
               _buildSlider(
                 value: _clarity,
                 onChanged: (val) {
                   _clarity = val;
-                  _updateFeedback(l10n); // Pass l10n
+                  _updateFeedback(l10n);
                 },
                 gradient: [Colors.blueGrey, Colors.cyanAccent.shade400],
               ),
               const SizedBox(height: 25),
 
               // 2. VALENCE SLIDER
-              _buildSliderLabel(l10n.labelNegative, l10n.labelPositive, textColor), // ✅ Translated
+              _buildSliderLabel(
+                  l10n.labelNegative, l10n.labelPositive, textColor),
               _buildSlider(
                 value: _valence,
                 onChanged: (val) {
@@ -220,7 +236,8 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
               const SizedBox(height: 25),
 
               // 3. INTENSITY SLIDER
-              _buildSliderLabel(l10n.labelSoftEnergy, l10n.labelHighIntensity, textColor), // ✅ Translated
+              _buildSliderLabel(
+                  l10n.labelSoftEnergy, l10n.labelHighIntensity, textColor),
               _buildSlider(
                 value: _intensity,
                 onChanged: (val) {
@@ -245,7 +262,7 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),
-                child: Text(l10n.btnFeelHeard, // ✅ Translated
+                child: Text(l10n.btnFeelHeard,
                     style: TextStyle(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold)),

@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:renbo/utils/theme.dart';
+// ✅ Import Tracking Service
+import 'package:renbo/services/analytics_service.dart';
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
@@ -21,6 +23,9 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
   @override
   void initState() {
     super.initState();
+    // ✅ START TRACKING SESSION
+    AnalyticsService.startFeatureSession();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
@@ -29,6 +34,8 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
 
   @override
   void dispose() {
+    // ✅ END TRACKING SESSION
+    AnalyticsService.endFeatureSession("Zen Space");
     _controller.dispose();
     super.dispose();
   }
@@ -77,7 +84,7 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
     // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
 
-    // Clean up old points to keep performance high
+    // Clean up old points to keep performance high (2 second lifespan)
     _points.removeWhere(
         (p) => DateTime.now().difference(p.timestamp).inMilliseconds > 2000);
 
@@ -111,7 +118,7 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
                   painter: SessionPainter(
                     points: _points,
                     animationValue: _controller.value,
-                    isDark: isDark, // ✅ Pass Theme mode
+                    isDark: isDark, // ✅ Pass Theme mode for enhanced glow
                   ),
                   size: Size.infinite,
                 );
@@ -157,7 +164,7 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
             child: Column(
               children: [
                 Text(
-                  // ✅ Dynamic Translation for Intensity
+                  // ✅ Dynamic Translation for Intensity Labels
                   _intensity < 0.3
                       ? l10n.zenQuiet
                       : (_intensity < 0.7 ? l10n.zenSteady : l10n.zenVibrant),
@@ -226,11 +233,11 @@ class SessionPainter extends CustomPainter {
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, isDark ? 15 : 10);
 
       if (point.isPulse) {
-        // Drawing a growing pulse
+        // Drawing a growing pulse (Long Press)
         final pulseSize = point.size * (1 + (animationValue * 0.2));
         canvas.drawCircle(point.position, pulseSize, paint);
 
-        // Secondary outer glow for dark mode
+        // Secondary outer glow specific to dark mode to make it "pop"
         if (isDark) {
           canvas.drawCircle(
             point.position,
@@ -239,7 +246,7 @@ class SessionPainter extends CustomPainter {
           );
         }
       } else {
-        // Drawing a expanding ripple
+        // Drawing an expanding ripple (Tap)
         final rippleSize = point.size + (age / 10);
         canvas.drawCircle(point.position, rippleSize, paint);
       }

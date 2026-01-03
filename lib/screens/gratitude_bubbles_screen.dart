@@ -5,6 +5,8 @@ import 'package:renbo/models/gratitude.dart';
 import 'package:renbo/services/gratitude_storage.dart';
 import 'package:renbo/utils/theme.dart';
 import 'package:renbo/widgets/gratitude_bubbles_widget.dart';
+// ✅ Import Tracking Service
+import 'package:renbo/services/analytics_service.dart';
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
@@ -25,6 +27,9 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
   @override
   void initState() {
     super.initState();
+    // ✅ START TRACKING SESSION
+    AnalyticsService.startFeatureSession();
+
     _animationController = AnimationController(
       duration: const Duration(seconds: 10),
       vsync: this,
@@ -33,12 +38,14 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
 
   @override
   void dispose() {
+    // ✅ END TRACKING SESSION
+    AnalyticsService.endFeatureSession("Gratitude");
     _controller.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
-  // 🔥 Firestore version: Push to DB, trigger local confetti
+  /// Adds a gratitude entry to Firestore and triggers a local visual reward
   void _addGratitude() async {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
@@ -61,6 +68,7 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
     }
   }
 
+  /// Displays the themed and localized dialog for adding gratitude
   void _showAddGratitudeDialog(AppLocalizations l10n) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -68,23 +76,23 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        // 🌓 Themed Dialog Background
         backgroundColor: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          l10n.addGratitude, // ✅ Translated
-          style: TextStyle(color: theme.textTheme.titleLarge?.color),
+          l10n.addGratitude,
+          style: TextStyle(
+              color: theme.textTheme.titleLarge?.color,
+              fontWeight: FontWeight.bold),
         ),
         content: TextField(
           controller: _controller,
           autofocus: true,
           style: TextStyle(color: theme.textTheme.bodyLarge?.color),
           decoration: InputDecoration(
-            hintText: l10n.gratitudeHint, // ✅ Translated
+            hintText: l10n.gratitudeHint,
             hintStyle: TextStyle(
                 color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
             filled: true,
-            // 🌓 Dynamic Input Fill
             fillColor: isDark ? AppTheme.darkBackground : AppTheme.oatMilk,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(15),
@@ -100,7 +108,7 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              l10n.cancel, // ✅ Translated
+              l10n.cancel,
               style: TextStyle(
                   color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
             ),
@@ -117,7 +125,7 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
                   borderRadius: BorderRadius.circular(15)),
             ),
             child: Text(
-              l10n.add, // ✅ Translated
+              l10n.add,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -128,21 +136,17 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
 
   @override
   Widget build(BuildContext context) {
-    // 🎨 Dynamic Theme Colors
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
-
-    // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // Adaptive background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          l10n.gratitudeTitle, // ✅ Translated
-          style:
-              TextStyle(fontWeight: FontWeight.bold, color: textColor),
+          l10n.gratitudeTitle,
+          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -150,7 +154,6 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddGratitudeDialog(l10n),
-        // Using Primary Color for the FAB to keep it high-contrast but themed
         backgroundColor: theme.colorScheme.primary,
         child: Icon(Icons.add,
             color: isDark ? AppTheme.darkBackground : Colors.white),
@@ -167,11 +170,14 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
 
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return Center(
-                  child: Text(
-                    l10n.noGratitudes, // ✅ Translated
-                    style: TextStyle(
-                        fontSize: 16, color: textColor?.withOpacity(0.5)),
-                    textAlign: TextAlign.center,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Text(
+                      l10n.noGratitudes,
+                      style: TextStyle(
+                          fontSize: 16, color: textColor?.withOpacity(0.5)),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 );
               }
@@ -183,8 +189,7 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
 
               return Stack(
                 children: gratitudes.map((gratitude) {
-                  // Generate stable random positions based on the document ID
-                  // (using seed so bubbles don't jump around on every refresh)
+                  // Use HashCode as seed so positions are consistent for each bubble
                   final seed = gratitude.id.hashCode;
                   final random = Random(seed);
 
@@ -193,26 +198,28 @@ class _GratitudeBubblesScreenState extends State<GratitudeBubblesScreen>
                   final double yOffset =
                       random.nextDouble() * (screenHeight * 0.7 - size);
 
-                  // 🛠️ FIX: Removed 'Positioned' here because GratitudeBubble handles offset
                   return GratitudeBubble(
                     gratitude: gratitude,
                     bubbleSize: size,
                     animation: _animationController,
                     xOffset: xOffset,
                     yOffset: yOffset,
-                    onUpdated: () {}, // Stream handles updates now
+                    onUpdated:
+                        () {}, // Stream builder handles updates automatically
                   );
                 }).toList(),
               );
             },
           ),
 
-          // Confetti overlay
+          // Visual Reward Overlay (Confetti)
           if (_showConfetti)
-            Center(
-              child: Lottie.asset(
-                'assets/lottie/confetti.json',
-                repeat: false,
+            IgnorePointer(
+              child: Center(
+                child: Lottie.asset(
+                  'assets/lottie/confetti.json',
+                  repeat: false,
+                ),
               ),
             ),
         ],

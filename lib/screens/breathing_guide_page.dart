@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:renbo/utils/theme.dart';
-// ✅ Import Translations
+// ✅ Import Tracking & Translations
+import 'package:renbo/services/analytics_service.dart';
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class BreathingGuidePage extends StatefulWidget {
@@ -14,7 +15,7 @@ class BreathingGuidePage extends StatefulWidget {
 class _BreathingGuidePageState extends State<BreathingGuidePage>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
-  Timer? _breathingTimer; // Made nullable for safety
+  Timer? _breathingTimer;
   int _countdown = 4;
 
   // 0 = Breathe In, 1 = Hold, 2 = Breathe Out
@@ -24,10 +25,22 @@ class _BreathingGuidePageState extends State<BreathingGuidePage>
   @override
   void initState() {
     super.initState();
+    // ✅ START ANALYTICS SESSION
+    AnalyticsService.startFeatureSession();
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
     );
+  }
+
+  @override
+  void dispose() {
+    // ✅ END ANALYTICS SESSION
+    AnalyticsService.endFeatureSession("Meditation");
+    _animationController.dispose();
+    _breathingTimer?.cancel();
+    super.dispose();
   }
 
   void _startBreathing() {
@@ -48,7 +61,7 @@ class _BreathingGuidePageState extends State<BreathingGuidePage>
             // Was Breathe In -> Now Hold
             _phase = 1;
             _countdown = 2;
-            _animationController.stop(); // Hold animation
+            _animationController.stop(); // Pause expansion for holding breath
           } else if (_phase == 1) {
             // Was Hold -> Now Breathe Out
             _phase = 2;
@@ -73,13 +86,6 @@ class _BreathingGuidePageState extends State<BreathingGuidePage>
     setState(() {
       _isAnimating = false;
     });
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    _breathingTimer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -113,7 +119,7 @@ class _BreathingGuidePageState extends State<BreathingGuidePage>
       backgroundColor: theme.scaffoldBackgroundColor, // Adaptive background
       appBar: AppBar(
         title: Text(
-          l10n.breathingGuide, // ✅ Translated
+          l10n.breathingGuide,
           style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
@@ -125,26 +131,25 @@ class _BreathingGuidePageState extends State<BreathingGuidePage>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              instructionText, // ✅ Dynamic Translation
+              instructionText, // Localized Phase Text
               style: TextStyle(
                 fontSize: 32.0,
                 fontWeight: FontWeight.bold,
-                color: textColor, // Adaptive text color
+                color: textColor,
               ),
             ),
             const SizedBox(height: 100),
+
             AnimatedBuilder(
               animation: _animationController,
               builder: (context, child) {
                 double scale = 1.0;
                 if (_phase == 0) {
-                  // Breathe In
                   scale = 1.0 + _animationController.value;
                 } else if (_phase == 2) {
-                  // Breathe Out
                   scale = 2.0 - _animationController.value;
                 } else {
-                  scale = 2.0; // Hold expanded
+                  scale = 2.0; // Stay expanded during "Hold"
                 }
 
                 return Transform.scale(
@@ -153,7 +158,6 @@ class _BreathingGuidePageState extends State<BreathingGuidePage>
                     width: 150,
                     height: 150,
                     decoration: BoxDecoration(
-                      // 🌿 Adaptive "Lung" Color
                       color: primaryGreen.withOpacity(isDark ? 0.3 : 0.5),
                       shape: BoxShape.circle,
                       boxShadow: [
@@ -170,7 +174,8 @@ class _BreathingGuidePageState extends State<BreathingGuidePage>
                       style: TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? theme.colorScheme.onSurface : Colors.white,
+                        color:
+                            isDark ? theme.colorScheme.onSurface : Colors.white,
                       ),
                     ),
                   ),
@@ -179,20 +184,21 @@ class _BreathingGuidePageState extends State<BreathingGuidePage>
             ),
             const SizedBox(height: 100),
 
-            // Themed Start/Pause Button
+            // Themed Action Button
             SizedBox(
               width: 250,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? theme.colorScheme.surface : AppTheme.espresso,
-                  foregroundColor: Colors.white, // Text color
+                  backgroundColor:
+                      isDark ? theme.colorScheme.surface : AppTheme.espresso,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),
                 onPressed: _isAnimating ? _pauseBreathing : _startBreathing,
                 child: Text(
-                  _isAnimating ? l10n.pauseBreathing : l10n.startBreathing, // ✅ Translated
+                  _isAnimating ? l10n.pauseBreathing : l10n.startBreathing,
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),

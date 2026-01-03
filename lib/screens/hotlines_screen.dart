@@ -4,9 +4,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class Hotline {
-  final String name; 
-  final String description; 
-  final String contactPerson; 
+  final String name;
+  final String description;
+  final String contactPerson;
   final String phone;
 
   Hotline({
@@ -23,11 +23,21 @@ class HotlinesScreen extends StatelessWidget {
   /// Initiates a phone call to the provided [phoneNumber].
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri callUri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(callUri)) {
-      await launchUrl(callUri);
-    } else {
-      debugPrint('Could not launch phone dialer for $phoneNumber');
-      throw 'Could not launch $phoneNumber';
+    try {
+      if (await canLaunchUrl(callUri)) {
+        await launchUrlUri(callUri);
+      } else {
+        debugPrint('Could not launch phone dialer for $phoneNumber');
+      }
+    } catch (e) {
+      debugPrint('Error launching dialer: $e');
+    }
+  }
+
+  /// Helper to handle standard URL launching in newer flutter versions
+  Future<void> launchUrlUri(Uri url) async {
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
     }
   }
 
@@ -36,24 +46,24 @@ class HotlinesScreen extends StatelessWidget {
     // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
 
-    // ✅ Define Data INSIDE build to use translations
+    // ✅ Define Data INSIDE build to access the l10n context for translations
     final List<Hotline> hotlines = [
       Hotline(
-        name: l10n.hotlineKiran, // ✅ Translated
-        description: l10n.descKiran, // ✅ Translated
-        contactPerson: l10n.personKiran, // ✅ Translated
+        name: l10n.hotlineKiran,
+        description: l10n.descKiran,
+        contactPerson: l10n.personKiran,
         phone: "18005990019",
       ),
       Hotline(
-        name: l10n.hotlineVandrevala, // ✅ Translated
-        description: l10n.descVandrevala, // ✅ Translated
-        contactPerson: l10n.personVandrevala, // ✅ Translated
+        name: l10n.hotlineVandrevala,
+        description: l10n.descVandrevala,
+        contactPerson: l10n.personVandrevala,
         phone: "18602662345",
       ),
       Hotline(
-        name: l10n.hotlineSnehi, // ✅ Translated
-        description: l10n.descSnehi, // ✅ Translated
-        contactPerson: l10n.personSnehi, // ✅ Translated
+        name: l10n.hotlineSnehi,
+        description: l10n.descSnehi,
+        contactPerson: l10n.personSnehi,
         phone: "9582208181",
       ),
     ];
@@ -61,12 +71,13 @@ class HotlinesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          l10n.hotlinesTitle, // ✅ Translated
+          l10n.hotlinesTitle,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        centerTitle: true,
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
         itemCount: hotlines.length,
         itemBuilder: (context, index) {
           final hotline = hotlines[index];
@@ -75,11 +86,11 @@ class HotlinesScreen extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
-            elevation: 4,
-            shadowColor: Colors.deepPurple.withOpacity(0.2),
+            elevation: 3,
+            shadowColor: Colors.deepPurple.withOpacity(0.1),
             child: ListTile(
               contentPadding:
-                  const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               title: Text(
                 hotline.name,
                 style: const TextStyle(
@@ -93,22 +104,32 @@ class HotlinesScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(hotline.description),
-                    const SizedBox(height: 4),
                     Text(
-                      l10n.contactPrefix(hotline.contactPerson), // ✅ Translated
+                      hotline.description,
+                      style: const TextStyle(fontSize: 14, height: 1.3),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.contactPrefix(hotline.contactPerson),
                       style: const TextStyle(
                         fontStyle: FontStyle.italic,
                         color: Colors.black54,
+                        fontSize: 13,
                       ),
                     ),
                   ],
                 ),
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.call, color: Colors.green, size: 28),
-                tooltip: l10n.callTooltip(hotline.phone), // ✅ Translated
-                onPressed: () => _makePhoneCall(hotline.phone),
+              trailing: Container(
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.call, color: Colors.green, size: 26),
+                  tooltip: l10n.callTooltip(hotline.phone),
+                  onPressed: () => _makePhoneCall(hotline.phone),
+                ),
               ),
             ),
           );

@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import '../services/journal_storage.dart';
 import '../models/journal_entry.dart';
-import '../utils/theme.dart'; // Ensure this is imported
+import '../utils/theme.dart';
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
@@ -43,6 +43,8 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
 
   void _saveEntry(AppLocalizations l10n) async {
     final text = _controller.text.trim();
+
+    // Validate if the entry is completely empty
     if (text.isEmpty && pickedImage == null && recordedAudioPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -53,9 +55,9 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
     }
 
     final updatedEntry = JournalEntry(
-      id: widget.entry.id, // Pass existing ID to update
+      id: widget.entry.id, // Keep the same ID for updating
       content: text,
-      timestamp: widget.entry.timestamp, // Keep original timestamp
+      timestamp: widget.entry.timestamp, // Maintain original date
       emotion: widget.entry.emotion,
       imagePath: pickedImage?.path,
       audioPath: recordedAudioPath,
@@ -151,19 +153,7 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
                       ),
                     ),
                   ),
-                  // Image Preview Logic
-                  if (pickedImage != null)
-                    Positioned.fill(
-                        child: Image.file(pickedImage!, fit: BoxFit.cover))
-                  else if (widget.entry.imagePath != null &&
-                      widget.entry.imagePath!.isNotEmpty)
-                    Positioned.fill(
-                        child: widget.entry.imagePath!.startsWith('http')
-                            ? Image.network(widget.entry.imagePath!,
-                                fit: BoxFit.cover)
-                            : Image.file(File(widget.entry.imagePath!),
-                                fit: BoxFit.cover)),
-                  
+
                   // Small thumbnail if image exists (overlay style)
                   if (pickedImage != null ||
                       (widget.entry.imagePath?.isNotEmpty ?? false))
@@ -195,7 +185,9 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
                 _buildActionButton(
                   onPressed: () => _startStopRecording(l10n),
                   icon: isRecording ? Icons.stop : Icons.mic,
-                  label: isRecording ? l10n.stopRecording : l10n.recordAudio, // ✅ Translated
+                  label: isRecording
+                      ? l10n.stopRecording
+                      : l10n.recordAudio, // ✅ Translated
                   color: isRecording ? Colors.red : primaryGreen,
                   textColor: isDark ? AppTheme.darkBackground : Colors.white,
                 ),
@@ -222,7 +214,8 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
                 ),
                 onPressed: () => _saveEntry(l10n),
                 child: Text(l10n.saveChanges, // ✅ Translated
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],

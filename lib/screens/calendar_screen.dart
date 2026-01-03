@@ -6,6 +6,8 @@ import '../services/journal_storage.dart';
 import 'journal_screen.dart';
 import 'journal_entries.dart';
 import '../utils/theme.dart';
+// ✅ Import Tracking Service
+import 'package:renbo/services/analytics_service.dart';
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
@@ -23,12 +25,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
+    // ✅ START TRACKING SESSION
+    AnalyticsService.startFeatureSession();
     _selectedDay = null;
   }
 
   @override
+  void dispose() {
+    // ✅ END TRACKING SESSION
+    AnalyticsService.endFeatureSession("Journaling");
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 🎨 Grab Dynamic Theme Colors
+    // 🎨 Dynamic Theme Colors
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final scaffoldBg = theme.scaffoldBackgroundColor;
@@ -40,13 +51,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     // ✅ Format the date according to the current language
-    final todayStr = DateFormat('EEEE, d MMM', l10n.localeName).format(DateTime.now());
+    final todayStr =
+        DateFormat('EEEE, d MMM', l10n.localeName).format(DateTime.now());
 
     return Scaffold(
-      backgroundColor: scaffoldBg, // Adaptive background
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
         title: Text(
-          l10n.journalCalendar, // ✅ Translated
+          l10n.journalCalendar,
           style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         backgroundColor: scaffoldBg,
@@ -57,10 +69,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       // FLOATING BUTTON: "New Entry"
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primaryGreen,
-        icon: Icon(Icons.edit, color: isDark ? AppTheme.darkBackground : Colors.white),
+        icon: Icon(Icons.edit,
+            color: isDark ? AppTheme.darkBackground : Colors.white),
         label: Text(
-          l10n.newEntry, // ✅ Translated
-          style: TextStyle(color: isDark ? AppTheme.darkBackground : Colors.white),
+          l10n.newEntry,
+          style:
+              TextStyle(color: isDark ? AppTheme.darkBackground : Colors.white),
         ),
         onPressed: () {
           _showMoodSelector(context, _selectedDay ?? DateTime.now(), l10n);
@@ -75,42 +89,53 @@ class _CalendarScreenState extends State<CalendarScreen> {
             padding: const EdgeInsets.only(bottom: 10),
             alignment: Alignment.center,
             child: Text(
-              l10n.todayIs(todayStr), // ✅ Translated
+              l10n.todayIs(todayStr),
               style: TextStyle(
-                fontSize: 16,
-                color: textColor?.withOpacity(0.6),
-                fontWeight: FontWeight.w600,
-              ),
+                  fontSize: 16,
+                  color: textColor?.withOpacity(0.6),
+                  fontWeight: FontWeight.w600),
             ),
           ),
 
-          // 2. CALENDAR (Themed)
+          // 2. CALENDAR (Themed & Localized)
           TableCalendar(
-            locale: l10n.localeName, // ✅ Localized Calendar
+            locale: l10n.localeName,
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
             currentDay: DateTime.now(),
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+            availableCalendarFormats: {CalendarFormat.month: l10n.monthLabel},
             headerStyle: HeaderStyle(
               formatButtonVisible: false,
               titleCentered: true,
-              titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+              titleTextStyle: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
               leftChevronIcon: Icon(Icons.chevron_left, color: textColor),
               rightChevronIcon: Icon(Icons.chevron_right, color: textColor),
             ),
             calendarStyle: CalendarStyle(
-              selectedDecoration: BoxDecoration(color: primaryGreen, shape: BoxShape.circle),
-              todayDecoration: BoxDecoration(color: AppTheme.cocoa.withOpacity(0.3), shape: BoxShape.circle),
-              todayTextStyle: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+              selectedDecoration:
+                  BoxDecoration(color: primaryGreen, shape: BoxShape.circle),
+              todayDecoration: BoxDecoration(
+                  color: AppTheme.cocoa.withOpacity(0.3),
+                  shape: BoxShape.circle),
+              todayTextStyle:
+                  TextStyle(color: textColor, fontWeight: FontWeight.bold),
               defaultTextStyle: TextStyle(color: textColor),
-              weekendTextStyle: TextStyle(color: isDark ? AppTheme.darkMatcha : AppTheme.cocoa),
+              weekendTextStyle: TextStyle(
+                  color: isDark
+                      ? AppTheme.darkMatcha.withOpacity(0.8)
+                      : AppTheme.cocoa),
               outsideTextStyle: TextStyle(color: textColor?.withOpacity(0.3)),
             ),
             daysOfWeekStyle: DaysOfWeekStyle(
-              weekdayStyle: TextStyle(color: textColor?.withOpacity(0.7), fontWeight: FontWeight.bold),
-              weekendStyle: TextStyle(color: primaryGreen.withOpacity(0.7), fontWeight: FontWeight.bold),
+              weekdayStyle: TextStyle(
+                  color: textColor?.withOpacity(0.7),
+                  fontWeight: FontWeight.bold),
+              weekendStyle: TextStyle(
+                  color: primaryGreen.withOpacity(0.7),
+                  fontWeight: FontWeight.bold),
             ),
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
@@ -136,16 +161,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 minimumSize: const Size(double.infinity, 55),
                 elevation: isDark ? 2 : 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
               ),
               icon: const Icon(Icons.history_edu, color: Colors.white),
               label: Text(
-                l10n.viewAllEntries, // ✅ Translated
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                l10n.viewAllEntries,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const JournalEntriesPage()),
+                  MaterialPageRoute(
+                      builder: (context) => const JournalEntriesPage()),
                 );
               },
             ),
@@ -158,13 +187,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   // 🌙 MOOD SELECTOR (Themed Dialog + Localization)
-  void _showMoodSelector(BuildContext context, DateTime selectedDate, AppLocalizations l10n) {
+  void _showMoodSelector(
+      BuildContext context, DateTime selectedDate, AppLocalizations l10n) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color;
     final surfaceColor = theme.colorScheme.surface;
 
-    // ✅ Define Mood Map here (so keys are translated)
+    // ✅ Define Mood Map here (so labels are translated)
     final Map<String, String> moodEmojis = {
       l10n.moodHappy: '😄',
       l10n.moodSad: '😢',
@@ -179,16 +209,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: surfaceColor, // Adaptive surface
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: surfaceColor,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
-            l10n.howAreYouFeeling, // ✅ Translated
+            l10n.howAreYouFeeling,
             textAlign: TextAlign.center,
             style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
           ),
           content: Wrap(
-            spacing: 10.0,
-            runSpacing: 10.0,
+            spacing: 12.0,
+            runSpacing: 12.0,
             alignment: WrapAlignment.center,
             children: moodEmojis.entries.map((entry) {
               return InkWell(
@@ -202,7 +233,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDark ? AppTheme.darkBackground : Colors.white,
+                        color: isDark
+                            ? theme.scaffoldBackgroundColor
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
@@ -212,12 +245,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           )
                         ],
                       ),
-                      child: Text(entry.value, style: const TextStyle(fontSize: 28)),
+                      child: Text(entry.value,
+                          style: const TextStyle(fontSize: 28)),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       entry.key,
-                      style: TextStyle(fontSize: 12, color: textColor?.withOpacity(0.8)),
+                      style: TextStyle(
+                          fontSize: 11, color: textColor?.withOpacity(0.8)),
                     ),
                   ],
                 ),
@@ -233,7 +268,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => JournalScreen(selectedDate: date, emotion: emotion),
+        builder: (context) =>
+            JournalScreen(selectedDate: date, emotion: emotion),
       ),
     );
   }

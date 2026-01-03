@@ -51,8 +51,8 @@ class _JournalScreenState extends State<JournalScreen> {
   void initState() {
     super.initState();
 
-    // PRE-FILL DATA IF EDITING
     if (widget.existingEntry != null) {
+      // PRE-FILL DATA IF EDITING
       _titleController =
           TextEditingController(text: widget.existingEntry!.title);
       _contentController =
@@ -84,13 +84,14 @@ class _JournalScreenState extends State<JournalScreen> {
     final title = _titleController.text.trim();
     final text = _contentController.text.trim();
 
+    // Check if entry is completely empty
     if (title.isEmpty &&
         text.isEmpty &&
         pickedImage == null &&
         recordedAudioPath == null &&
         stickers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.emptyEntryError)), // ✅ Translated
+        SnackBar(content: Text(l10n.emptyEntryError)),
       );
       return;
     }
@@ -98,7 +99,7 @@ class _JournalScreenState extends State<JournalScreen> {
     if (widget.existingEntry != null) {
       // UPDATE EXISTING ENTRY
       final entry = widget.existingEntry!;
-      entry.title = title.isEmpty ? l10n.untitledEntry : title; // ✅ Translated
+      entry.title = title.isEmpty ? l10n.untitledEntry : title;
       entry.content = text;
       entry.imagePath = pickedImage?.path;
       entry.audioPath = recordedAudioPath;
@@ -107,13 +108,13 @@ class _JournalScreenState extends State<JournalScreen> {
       await JournalStorage.updateEntry(entry);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.entryUpdated))); // ✅ Translated
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.entryUpdated)));
       }
     } else {
       // CREATE NEW ENTRY
       final entry = JournalEntry(
-        title: title.isEmpty ? l10n.untitledEntry : title, // ✅ Translated
+        title: title.isEmpty ? l10n.untitledEntry : title,
         content: text,
         timestamp: widget.selectedDate,
         emotion: widget.emotion,
@@ -168,8 +169,7 @@ class _JournalScreenState extends State<JournalScreen> {
     } else {
       if (await _audioRecorder.hasPermission()) {
         final dir = await getApplicationDocumentsDirectory();
-        final path =
-            '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final path = '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.m4a';
         await _audioRecorder.start(const RecordConfig(), path: path);
         setState(() {
           isRecording = true;
@@ -197,41 +197,41 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 
   Future<void> _speakText() async {
-    if (_contentController.text.isNotEmpty)
+    if (_contentController.text.isNotEmpty) {
       await _flutterTts.speak(_contentController.text);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 🎨 Grab Dynamic Theme colors
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    // Dynamic Colors based on current theme
     final scaffoldBg = theme.scaffoldBackgroundColor;
     final primaryTextColor = theme.textTheme.titleLarge?.color;
     final secondaryTextColor = theme.textTheme.bodyMedium?.color;
     final surfaceColor = theme.colorScheme.surface;
     final accentGreen = theme.colorScheme.primary;
 
-    // ✅ Helper for translations
-    final l10n = AppLocalizations.of(context)!;
-
     final displayDate = widget.existingEntry?.timestamp ?? widget.selectedDate;
     final dateStr =
         "${displayDate.day}/${displayDate.month}/${displayDate.year}";
 
-    // Calculate required height for stickers
+    // Dynamic height calculation for the sticker canvas
     double maxStickerY = 0;
     for (var s in stickers) {
       if (s.y > maxStickerY) maxStickerY = s.y;
     }
-    double requiredHeight = maxStickerY + 200;
+    double requiredHeight = maxStickerY + 250;
 
     return Scaffold(
-      backgroundColor: scaffoldBg, // Dynamic BG
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: scaffoldBg, // Dynamic App Bar BG
+        backgroundColor: scaffoldBg,
         title: Text(
             widget.existingEntry != null
-                ? l10n.editJournalEntry // ✅ Translated
+                ? l10n.editJournalEntry
                 : "$dateStr • ${widget.emotion}",
             style: TextStyle(color: primaryTextColor, fontSize: 16)),
         centerTitle: true,
@@ -245,12 +245,11 @@ class _JournalScreenState extends State<JournalScreen> {
       ),
       body: Column(
         children: [
-          // SCROLLABLE CANVAS
           Expanded(
             child: SingleChildScrollView(
               child: Stack(
                 children: [
-                  // INVISIBLE SPACER to ensure canvas is big enough
+                  // Invisible Spacer to allow dragging stickers anywhere
                   Container(
                     height: requiredHeight < MediaQuery.of(context).size.height
                         ? MediaQuery.of(context).size.height
@@ -258,7 +257,7 @@ class _JournalScreenState extends State<JournalScreen> {
                     width: double.infinity,
                   ),
 
-                  // TEXT CONTENT
+                  // Text and Image Content
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -270,7 +269,7 @@ class _JournalScreenState extends State<JournalScreen> {
                               fontWeight: FontWeight.bold,
                               color: primaryTextColor),
                           decoration: InputDecoration(
-                            hintText: l10n.journalTitleHint, // ✅ Translated
+                            hintText: l10n.journalTitleHint,
                             hintStyle: TextStyle(
                                 color: secondaryTextColor?.withOpacity(0.5)),
                             border: InputBorder.none,
@@ -285,7 +284,7 @@ class _JournalScreenState extends State<JournalScreen> {
                               color: primaryTextColor,
                               height: 1.5),
                           decoration: InputDecoration(
-                            hintText: l10n.journalContentHint, // ✅ Translated
+                            hintText: l10n.journalContentHint,
                             hintStyle: TextStyle(
                                 color: secondaryTextColor?.withOpacity(0.5)),
                             border: InputBorder.none,
@@ -302,7 +301,7 @@ class _JournalScreenState extends State<JournalScreen> {
                     ),
                   ),
 
-                  // STICKERS
+                  // Sticker Layer
                   ...stickers.asMap().entries.map((entry) {
                     int idx = entry.key;
                     JournalSticker sticker = entry.value;
@@ -350,11 +349,11 @@ class _JournalScreenState extends State<JournalScreen> {
             ),
           ),
 
-          // 🌙 DYNAMIC TOOLBAR
+          // Bottom Tool Bar
           Container(
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
             decoration: BoxDecoration(
-              color: surfaceColor, // Switches from white to darkSurface
+              color: surfaceColor,
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(30)),
               boxShadow: [
@@ -420,11 +419,7 @@ class _JournalScreenState extends State<JournalScreen> {
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.color) // Dynamic Label Color
-              ),
+                  color: Theme.of(context).textTheme.bodyLarge?.color)),
         ],
       ),
     );

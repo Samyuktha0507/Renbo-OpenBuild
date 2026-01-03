@@ -13,11 +13,13 @@ class EmotionTrackerScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF5F2), 
+      backgroundColor: const Color(0xFFFFF5F2), // soft background
       appBar: AppBar(
         backgroundColor: const Color(0xFF568F87),
-        title: Text(l10n.howAreYouFeeling, // ✅ Translated (Existing Key)
-            style: const TextStyle(color: Colors.white)),
+        title: Text(
+          l10n.howAreYouFeeling, // ✅ Translated
+          style: const TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
       ),
       body: Center(
@@ -27,11 +29,16 @@ class EmotionTrackerScreen extends StatelessWidget {
             Wrap(
               spacing: 12,
               runSpacing: 12,
+              alignment: WrapAlignment.center,
               children: [
-                _buildEmotionButton(context, l10n.emotionHappy, l10n.msgHappy, l10n),
-                _buildEmotionButton(context, l10n.emotionSad, l10n.msgSad, l10n),
-                _buildEmotionButton(context, l10n.emotionAngry, l10n.msgAngry, l10n),
-                _buildEmotionButton(context, l10n.emotionTired, l10n.msgTired, l10n),
+                _buildEmotionButton(
+                    context, l10n.emotionHappy, l10n.msgHappy, l10n),
+                _buildEmotionButton(
+                    context, l10n.emotionSad, l10n.msgSad, l10n),
+                _buildEmotionButton(
+                    context, l10n.emotionAngry, l10n.msgAngry, l10n),
+                _buildEmotionButton(
+                    context, l10n.emotionTired, l10n.msgTired, l10n),
               ],
             ),
           ],
@@ -40,8 +47,8 @@ class EmotionTrackerScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmotionButton(
-      BuildContext context, String label, String message, AppLocalizations l10n) {
+  Widget _buildEmotionButton(BuildContext context, String label, String message,
+      AppLocalizations l10n) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFF5BABB),
@@ -53,15 +60,16 @@ class EmotionTrackerScreen extends StatelessWidget {
         elevation: 3,
       ),
       onPressed: () {
-        // First show message
+        // 1. Show localized feedback message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             backgroundColor: const Color(0xFF568F87),
+            duration: const Duration(seconds: 2),
           ),
         );
 
-        // Then show journaling button
+        // 2. Show localized journaling dialog
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -89,8 +97,10 @@ class EmotionTrackerScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          JournalScreen(selectedDate: DateTime.now(), emotion: label), 
+                      builder: (context) => JournalScreen(
+                        selectedDate: DateTime.now(),
+                        emotion: label, // pass translated emotion label
+                      ),
                     ),
                   );
                 },

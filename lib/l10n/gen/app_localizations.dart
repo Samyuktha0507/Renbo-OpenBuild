@@ -122,6 +122,54 @@ abstract class AppLocalizations {
   /// **'Select Language'**
   String get selectLanguage;
 
+  /// No description provided for @accountDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Details'**
+  String get accountDetails;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @email.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get email;
+
+  /// No description provided for @analytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Analytics'**
+  String get analytics;
+
+  /// No description provided for @wellnessDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Wellness Dashboard'**
+  String get wellnessDashboard;
+
+  /// No description provided for @viewTrends.
+  ///
+  /// In en, this message translates to:
+  /// **'View your mental health trends'**
+  String get viewTrends;
+
+  /// No description provided for @preferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get preferences;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get logout;
+
   /// No description provided for @helloUser.
   ///
   /// In en, this message translates to:

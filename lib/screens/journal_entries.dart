@@ -3,7 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../models/journal_entry.dart';
 import '../services/journal_storage.dart';
-import 'journal_detail.dart'; // ✅ Make sure this file exists!
+import 'journal_detail.dart';
 import 'journal_screen.dart';
 import '../utils/theme.dart';
 // ✅ Import Translations
@@ -18,16 +18,16 @@ class JournalEntriesPage extends StatefulWidget {
 
 class _JournalEntriesPageState extends State<JournalEntriesPage> {
   DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
+  DateTime? _selectedDay; // ✅ Starts as NULL to show all entries initially
   late Future<List<JournalEntry>> _entriesFuture;
 
   @override
   void initState() {
     super.initState();
-    _selectedDay = null;
     _loadEntries();
   }
 
+  /// Refreshes the entries from storage
   void _loadEntries() {
     setState(() {
       _entriesFuture = JournalStorage.getEntries();
@@ -47,7 +47,7 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
     // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
 
-    // ✅ Format Today's Date with Locale
+    // ✅ Localized "Today" header (e.g., "Monday, 2 Jan")
     final todayStr =
         DateFormat('EEEE, d MMM', l10n.localeName).format(DateTime.now());
 
@@ -63,48 +63,45 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
         iconTheme: IconThemeData(color: textColor),
       ),
 
-      // FLOATING BUTTON
+      // FLOATING BUTTON: New Entry (Defaults to Today or Selected Day)
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primaryGreen,
         icon: Icon(Icons.edit,
             color: isDark ? AppTheme.darkBackground : Colors.white),
         label: Text(
           l10n.newEntry,
-          style: TextStyle(
-              color: isDark ? AppTheme.darkBackground : Colors.white),
+          style:
+              TextStyle(color: isDark ? AppTheme.darkBackground : Colors.white),
         ),
-        onPressed: () {
-          _navigateToNewEntry(_selectedDay ?? DateTime.now());
-        },
+        onPressed: () => _navigateToNewEntry(_selectedDay ?? DateTime.now()),
       ),
 
       body: Column(
         children: [
-          // HEADER
+          // 1. HEADER
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 12),
             alignment: Alignment.center,
             child: Text(
               l10n.todayIs(todayStr),
               style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   color: textColor?.withOpacity(0.6),
                   fontWeight: FontWeight.w600),
             ),
           ),
 
-          // CALENDAR
+          // 2. CALENDAR
+
           TableCalendar(
-            locale: l10n.localeName,
+            locale: l10n.localeName, // ✅ Ensure calendar uses correct language
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
             currentDay: DateTime.now(),
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            availableCalendarFormats: {
-              CalendarFormat.month: l10n.monthLabel
-            },
+            availableCalendarFormats: {CalendarFormat.month: l10n.monthLabel},
             headerStyle: HeaderStyle(
               formatButtonVisible: false,
               titleCentered: true,
@@ -123,18 +120,8 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
                   TextStyle(color: textColor, fontWeight: FontWeight.bold),
               defaultTextStyle: TextStyle(color: textColor),
               weekendTextStyle: TextStyle(
-                  color: isDark
-                      ? AppTheme.darkMatcha.withOpacity(0.8)
-                      : AppTheme.cocoa),
+                  color: isDark ? AppTheme.darkMatcha : AppTheme.cocoa),
               outsideTextStyle: TextStyle(color: textColor?.withOpacity(0.3)),
-            ),
-            daysOfWeekStyle: DaysOfWeekStyle(
-              weekdayStyle: TextStyle(
-                  color: textColor?.withOpacity(0.7),
-                  fontWeight: FontWeight.bold),
-              weekendStyle: TextStyle(
-                  color: primaryGreen.withOpacity(0.7),
-                  fontWeight: FontWeight.bold),
             ),
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
@@ -145,58 +132,64 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
           ),
 
           const SizedBox(height: 10),
-          Divider(color: theme.dividerColor),
+          Divider(
+              color: theme.dividerColor,
+              thickness: 1,
+              indent: 20,
+              endIndent: 20),
 
-          // ENTRIES LIST
+          // 3. ENTRIES LIST (Filtered by selected day)
           Expanded(
             child: FutureBuilder<List<JournalEntry>>(
               future: _entriesFuture,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
+
+                if (!snapshot.hasData) return const SizedBox();
 
                 final allEntries = snapshot.data!;
                 List<JournalEntry> displayEntries;
 
+                // FILTERING LOGIC
                 if (_selectedDay == null) {
                   displayEntries = List.from(allEntries);
                   displayEntries
                       .sort((a, b) => b.timestamp.compareTo(a.timestamp));
                 } else {
                   displayEntries = allEntries
-                      .where((entry) =>
-                          isSameDay(entry.timestamp, _selectedDay))
+                      .where(
+                          (entry) => isSameDay(entry.timestamp, _selectedDay))
                       .toList();
                 }
 
+                // EMPTY STATE
                 if (displayEntries.isEmpty) {
                   return Center(
-                    child: GestureDetector(
-                      onTap: () =>
-                          _navigateToNewEntry(_selectedDay ?? DateTime.now()),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.create,
-                              size: 40, color: textColor?.withOpacity(0.3)),
-                          const SizedBox(height: 10),
-                          Text(
-                            _selectedDay == null
-                                ? l10n.noEntriesYet
-                                : l10n.noEntriesForDay,
-                            textAlign: TextAlign.center,
-                            style:
-                                TextStyle(color: textColor?.withOpacity(0.5)),
-                          ),
-                        ],
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.create,
+                            size: 48, color: textColor?.withOpacity(0.2)),
+                        const SizedBox(height: 12),
+                        Text(
+                          _selectedDay == null
+                              ? l10n.noEntriesYet
+                              : l10n.noEntriesForDay,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: textColor?.withOpacity(0.4), fontSize: 16),
+                        ),
+                      ],
                     ),
                   );
                 }
 
+                // LIST OF CARDS
                 return ListView.builder(
-                  padding: const EdgeInsets.all(15),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   itemCount: displayEntries.length,
                   itemBuilder: (context, index) {
                     final entry = displayEntries[index];
@@ -206,25 +199,38 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
 
                     return Card(
                       color: surfaceColor,
-                      elevation: isDark ? 2 : 0,
+                      elevation: isDark ? 1 : 0,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)),
-                      margin: const EdgeInsets.only(bottom: 10),
+                        borderRadius: BorderRadius.circular(16),
+                        side: isDark
+                            ? BorderSide.none
+                            : BorderSide(color: Colors.grey.shade200),
+                      ),
+                      margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         title: Text(
                           entry.title ?? l10n.untitled,
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, color: textColor),
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                              fontSize: 17),
                         ),
-                        subtitle: Text(
-                          "$entryDate\n${entry.content}",
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: textColor?.withOpacity(0.7)),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            "$entryDate\n${entry.content}",
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                color: textColor?.withOpacity(0.6),
+                                height: 1.4),
+                          ),
                         ),
-                        isThreeLine: true,
                         trailing: entry.getStickers().isNotEmpty
-                            ? Icon(Icons.emoji_emotions, color: primaryGreen)
+                            ? Icon(Icons.emoji_emotions_outlined,
+                                color: primaryGreen, size: 20)
                             : null,
                         onTap: () {
                           Navigator.push(
@@ -250,10 +256,8 @@ class _JournalEntriesPageState extends State<JournalEntriesPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => JournalScreen(
-          selectedDate: date,
-          emotion: "Neutral",
-        ),
+        builder: (context) =>
+            JournalScreen(selectedDate: date, emotion: "Neutral"),
       ),
     ).then((_) => _loadEntries());
   }

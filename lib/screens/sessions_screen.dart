@@ -10,8 +10,10 @@ class SessionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           l10n.sessionsTitle, // ✅ Translated
@@ -20,6 +22,8 @@ class SessionsScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -27,12 +31,17 @@ class SessionsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildUpcomingSession(l10n),
-              const SizedBox(height: 20),
+              _buildUpcomingSection(l10n),
+              const SizedBox(height: 24),
               Text(
                 l10n.allSessions, // ✅ Translated
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.darkGray,
+                ),
               ),
+              const SizedBox(height: 12),
               _buildSessionList(l10n),
             ],
           ),
@@ -41,28 +50,27 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingSession(AppLocalizations l10n) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.upcomingSession, // ✅ Translated
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            _buildSessionCard(
-              name: 'Selena V',
-              specialty: l10n.clinicalPsychology, // ✅ Translated
-              time: '7:00 PM - 8:00 PM',
-              isUpcoming: true,
-              l10n: l10n,
-            ),
-          ],
+  Widget _buildUpcomingSection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.upcomingSession, // ✅ Translated
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.darkGray,
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        _buildSessionCard(
+          name: 'Selena V',
+          specialty: l10n.clinicalPsychology, // ✅ Translated
+          time: '7:00 PM - 8:00 PM',
+          isUpcoming: true,
+          l10n: l10n,
+        ),
+      ],
     );
   }
 
@@ -72,13 +80,14 @@ class SessionsScreen extends StatelessWidget {
         _buildSessionCard(
           name: 'Selena V',
           specialty: l10n.clinicalPsychology, // ✅ Translated
-          time: 'Flat March 28',
+          time: 'March 28',
           l10n: l10n,
         ),
+        const SizedBox(height: 8),
         _buildSessionCard(
           name: 'Jessica R',
           specialty: l10n.counseling, // ✅ Translated
-          time: 'Flat March 27',
+          time: 'March 27',
           l10n: l10n,
         ),
       ],
@@ -89,51 +98,60 @@ class SessionsScreen extends StatelessWidget {
     required String name,
     required String specialty,
     required String time,
-    required AppLocalizations l10n, // Pass translation helper
+    required AppLocalizations l10n,
     bool isUpcoming = false,
   }) {
     return Card(
       elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      // Using a subtle off-white/surface color for better contrast
+      color: isUpcoming ? Colors.white : Colors.white.withOpacity(0.7),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
           children: [
-            const CircleAvatar(
-              radius: 25,
-              backgroundColor: AppTheme.lightGray,
-              child: Icon(Icons.person, color: AppTheme.mediumGray),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 25,
+                  backgroundColor: AppTheme.lightGray,
+                  child: Icon(Icons.person, color: AppTheme.mediumGray),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppTheme.darkGray,
+                        ),
+                      ),
+                      Text(
+                        specialty,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.mediumGray,
+                        ),
+                      ),
+                      Text(
+                        time,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    specialty,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.mediumGray,
-                    ),
-                  ),
-                  Text(
-                    time,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.mediumGray,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isUpcoming)
-              Row(
-                children: [
+                ),
+                if (!isUpcoming)
                   OutlinedButton(
                     onPressed: () {},
                     style: OutlinedButton.styleFrom(
@@ -143,33 +161,49 @@ class SessionsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: Text(l10n.reschedule), // ✅ Translated
+                    child: Text(l10n.rebook), // ✅ Translated
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+              ],
+            ),
+            if (isUpcoming) ...[
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryColor,
+                        side: const BorderSide(color: AppTheme.primaryColor),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      child: Text(l10n.reschedule), // ✅ Translated
                     ),
-                    child: Text(l10n.joinNow), // ✅ Translated
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(l10n.joinNow), // ✅ Translated
+                    ),
                   ),
                 ],
-              )
-            else
-              OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,
-                  side: const BorderSide(color: AppTheme.primaryColor),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: Text(l10n.rebook), // ✅ Translated
               ),
+            ],
           ],
         ),
       ),
