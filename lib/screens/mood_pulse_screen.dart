@@ -17,7 +17,7 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
   double _clarity = 0.5; // Cognitive: Foggy to Clear
 
   // These will be updated dynamically
-  String _aiFeedback = ""; 
+  String _aiFeedback = "";
   String _comfortAdvice = "";
 
   @override
@@ -26,8 +26,8 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
     // Initialize text on first load using current locale
     final l10n = AppLocalizations.of(context)!;
     if (_aiFeedback.isEmpty) {
-        _aiFeedback = l10n.defaultFeedback;
-        _comfortAdvice = l10n.defaultAdvice;
+      _aiFeedback = l10n.defaultFeedback;
+      _comfortAdvice = l10n.defaultAdvice;
     }
   }
 
@@ -79,16 +79,26 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 🎨 Dynamic Theme Colors
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.titleLarge?.color;
+    final surfaceColor = theme.colorScheme.surface;
+
     // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor, // Adaptive background
       appBar: AppBar(
         title: Text(l10n.moodPulseTitle, // ✅ Translated
-            style: const TextStyle(fontFamily: 'Poppins')),
+            style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins')),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
       ),
       body: SingleChildScrollView(
         child: Container(
@@ -97,7 +107,7 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Dynamic Visual Indicator (The Pulse)
+              // 💓 THE PULSE INDICATOR
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.5, end: _intensity),
                 duration: const Duration(milliseconds: 300),
@@ -116,8 +126,9 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: _getMoodColor(_valence).withOpacity(0.4),
-                          // Blur is now tied to Clarity
+                          // Blur tied to Clarity: Foggy (low clarity) = more blur
+                          color: _getMoodColor(_valence)
+                              .withOpacity(isDark ? 0.6 : 0.4),
                           blurRadius: 20 + ((1 - _clarity) * 40),
                           spreadRadius: 5 + (value * 10),
                         )
@@ -139,26 +150,26 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
               ),
               const SizedBox(height: 40),
 
-              // AI Analysis Block
+              // 🤖 AI ANALYSIS BLOCK
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 child: Container(
                   key: ValueKey(_aiFeedback),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: surfaceColor, // Uses Coffee Bean in Dark Mode
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey[200]!),
+                    border: Border.all(color: textColor!.withOpacity(0.1)),
                   ),
                   child: Column(
                     children: [
                       Text(
                         _aiFeedback,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.darkGray,
+                          color: textColor,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -168,7 +179,7 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           height: 1.4,
-                          color: Colors.blueGrey[700],
+                          color: textColor.withOpacity(0.7),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -179,41 +190,42 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
               const SizedBox(height: 30),
 
               // 1. CLARITY SLIDER
-              _buildSliderLabel(l10n.labelFoggy, l10n.labelClear), // ✅ Translated
+              _buildSliderLabel(l10n.labelFoggy, l10n.labelClear, textColor), // ✅ Translated
               _buildSlider(
                 value: _clarity,
                 onChanged: (val) {
-                   _clarity = val;
-                   _updateFeedback(l10n); // Pass l10n to update text
+                  _clarity = val;
+                  _updateFeedback(l10n); // Pass l10n
                 },
-                gradient: const [Colors.blueGrey, Colors.cyanAccent],
+                gradient: [Colors.blueGrey, Colors.cyanAccent.shade400],
               ),
               const SizedBox(height: 25),
 
               // 2. VALENCE SLIDER
-              _buildSliderLabel(l10n.labelNegative, l10n.labelPositive), // ✅ Translated
+              _buildSliderLabel(l10n.labelNegative, l10n.labelPositive, textColor), // ✅ Translated
               _buildSlider(
                 value: _valence,
                 onChanged: (val) {
-                   _valence = val;
-                   _updateFeedback(l10n);
+                  _valence = val;
+                  _updateFeedback(l10n);
                 },
-                gradient: const [
+                gradient: [
                   Colors.blueGrey,
                   Colors.blueAccent,
                   Colors.greenAccent,
+                  Colors.greenAccent.shade400,
                   Colors.yellowAccent
                 ],
               ),
               const SizedBox(height: 25),
 
               // 3. INTENSITY SLIDER
-              _buildSliderLabel(l10n.labelSoftEnergy, l10n.labelHighIntensity), // ✅ Translated
+              _buildSliderLabel(l10n.labelSoftEnergy, l10n.labelHighIntensity, textColor), // ✅ Translated
               _buildSlider(
                 value: _intensity,
                 onChanged: (val) {
-                   _intensity = val;
-                   _updateFeedback(l10n);
+                  _intensity = val;
+                  _updateFeedback(l10n);
                 },
                 gradient: [
                   _getMoodColor(_valence).withOpacity(0.5),
@@ -223,17 +235,20 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
 
               const SizedBox(height: 40),
 
+              // 💚 THEMED ACTION BUTTON
               OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                  side: const BorderSide(color: Color(0xFF8E97FD)),
+                  side: BorderSide(color: theme.colorScheme.primary),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),
                 child: Text(l10n.btnFeelHeard, // ✅ Translated
-                    style: const TextStyle(color: Color(0xFF8E97FD))),
+                    style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -242,18 +257,18 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
     );
   }
 
-  Widget _buildSliderLabel(String left, String right) {
+  Widget _buildSliderLabel(String left, String right, Color textColor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(left,
-            style: const TextStyle(
-                color: Colors.blueGrey,
+            style: TextStyle(
+                color: textColor.withOpacity(0.6),
                 fontSize: 12,
                 fontWeight: FontWeight.w600)),
         Text(right,
-            style: const TextStyle(
-                color: Colors.blueGrey,
+            style: TextStyle(
+                color: textColor.withOpacity(0.6),
                 fontSize: 12,
                 fontWeight: FontWeight.w600)),
       ],
@@ -262,7 +277,7 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
 
   Widget _buildSlider({
     required double value,
-    required Function(double) onChanged, // Simplified type definition
+    required Function(double) onChanged,
     required List<Color> gradient,
   }) {
     return Container(
@@ -294,7 +309,7 @@ class _MoodPulseScreenState extends State<MoodPulseScreen> {
   Color _getMoodColor(double value) {
     if (value < 0.3) return Colors.blueGrey;
     if (value < 0.5) return Colors.blueAccent;
-    if (value < 0.7) return Colors.greenAccent;
+    if (value < 0.7) return Colors.greenAccent.shade400;
     return Colors.orangeAccent;
   }
 }

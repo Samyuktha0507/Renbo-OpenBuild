@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-// ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -14,18 +13,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
-    // After 3 seconds, navigate to the authentication check screen.
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacementNamed('/auth_check');
+    // Ensures navigation happens after the build phase is complete
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startSequence();
     });
+  }
+
+  void _startSequence() async {
+    // Wait for the splash animation to show
+    await Future.delayed(const Duration(seconds: 3));
+    
+    if (mounted) {
+      // Use pushNamedAndRemoveUntil to wipe the splash screen from history
+      Navigator.pushNamedAndRemoveUntil(context, '/auth_check', (route) => false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Helper for translations
-    // Note: Since this is the very first screen, make sure LocaleProvider is initialized higher up
-    // If AppLocalizations is null here, ensure MaterialApp has the delegates set correctly.
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: Center(
@@ -36,14 +42,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               'assets/lottie/axolotl.json',
               width: 200,
               height: 200,
+              repeat: true,
+              errorBuilder: (context, error, stackTrace) => 
+                const Icon(Icons.favorite, size: 100, color: Color(0xFFF06292)),
             ),
             const SizedBox(height: 20),
             Text(
-              l10n.appTitle, // ✅ Translated
+              l10n?.appTitle ?? 'Renbo',
               style: const TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFF06292),
+                letterSpacing: 1.5,
               ),
             ),
           ],

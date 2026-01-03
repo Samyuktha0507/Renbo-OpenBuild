@@ -5,12 +5,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-// Import directly from your folder
-import 'package:renbo/l10n/gen/app_localizations.dart';
 
+import 'package:renbo/l10n/gen/app_localizations.dart';
 import 'utils/theme.dart';
 import 'providers/mood_provider.dart';
 import 'providers/capsule_provider.dart';
+import 'providers/theme_provider.dart'; 
 import 'providers/locale_provider.dart';
 import 'firebase_options.dart';
 import 'screens/welcome_screen.dart';
@@ -20,28 +20,32 @@ import 'services/journal_storage.dart';
 import 'services/gratitude_storage.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await dotenv.load(fileName: ".env");
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await Hive.initFlutter();
+    await JournalStorage.init();
+    await GratitudeStorage.init();
 
-  await dotenv.load(fileName: ".env");
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  await Hive.initFlutter();
-  await JournalStorage.init();
-  await GratitudeStorage.init();
-
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => MoodProvider()),
-        ChangeNotifierProvider(create: (context) => CapsuleProvider()),
-        ChangeNotifierProvider(create: (context) => LocaleProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => MoodProvider()),
+          ChangeNotifierProvider(create: (context) => CapsuleProvider()),
+          ChangeNotifierProvider(create: (context) => ThemeProvider()), 
+          ChangeNotifierProvider(create: (context) => LocaleProvider()),
+        ],
+        child: const MyApp(),
+      ),
+    );
+  } catch (e) {
+    debugPrint("Initialization Error: $e");
+    // Run a basic app to show the error if everything fails
+    runApp(MaterialApp(home: Scaffold(body: Center(child: Text("Error: $e")))));
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -50,24 +54,23 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<LocaleProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
       title: 'Renbo',
-      theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-
-      // 🌍 LOCALIZATION SETUP 🌍
-      locale: provider.locale, 
-      supportedLocales: L10n.all,
-      
-      // ✅ FIX: Removed 'const' keyword here
-      localizationsDelegates: [
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeProvider.themeMode,
+      locale: provider.locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-
+      // Explicitly start at welcome
       initialRoute: '/welcome',
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
@@ -88,14 +91,10 @@ class AuthCheck extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
-        if (snapshot.hasData) {
-          return const HomeScreen();
-        }
-        return const AuthPage();
+        // If logged in, navigate to Home, otherwise to Login (AuthPage)
+        return snapshot.hasData ? const HomeScreen() : const AuthPage();
       },
     );
   }

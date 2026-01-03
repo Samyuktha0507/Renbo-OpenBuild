@@ -70,37 +70,50 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<bool> _showEndSessionDialog(AppLocalizations l10n) async {
     if (_messages.isEmpty) return true;
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: theme.colorScheme.surface, // Adaptive Background
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(l10n.endSession), // ✅ Translated
-        content: Text(l10n.saveThreadQuestion), // ✅ Translated
+        title: Text(
+          l10n.endSession, // ✅ Translated
+          style: TextStyle(color: theme.textTheme.titleLarge?.color),
+        ),
+        content: Text(
+          l10n.saveThreadQuestion, // ✅ Translated
+          style: TextStyle(color: theme.textTheme.bodyMedium?.color),
+        ),
         actions: [
           TextButton(
             onPressed: () {
               JournalStorage.deleteTemporaryChat();
               Navigator.pop(context, true);
             },
-            child: Text(l10n.discard, style: const TextStyle(color: Colors.red)), // ✅ Translated
+            child: Text(l10n.discard,
+                style: const TextStyle(color: Colors.red)), // ✅ Translated
           ),
           ElevatedButton(
             onPressed: () async {
-              // Create dynamic date string
-              final dateStr = "${DateTime.now().day}/${DateTime.now().month} ${DateTime.now().hour}:${DateTime.now().minute}";
-              
+              final dateStr =
+                  "${DateTime.now().day}/${DateTime.now().month} ${DateTime.now().hour}:${DateTime.now().minute}";
+
               await JournalStorage.saveChatThread(
                 messages: _messages,
-                // ✅ Translated Summary
-                summary: l10n.sessionDefaultTitle(dateStr), 
+                summary: l10n.sessionDefaultTitle(dateStr), // ✅ Translated
               );
               if (mounted) Navigator.pop(context, true);
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor),
-            child: Text(l10n.saveThread, // ✅ Translated
-                style: const TextStyle(color: Colors.white)),
+                backgroundColor: theme.colorScheme.primary),
+            child: Text(
+              l10n.saveThread, // ✅ Translated
+              style: TextStyle(
+                  color: isDark ? AppTheme.darkBackground : Colors.white),
+            ),
           ),
         ],
       ),
@@ -141,25 +154,32 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showHotlineSuggestion(AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.youAreNotAlone), // ✅ Translated
-        content: Text(l10n.hotlineQuestion), // ✅ Translated
+        backgroundColor: theme.colorScheme.surface,
+        title: Text(l10n.youAreNotAlone, // ✅ Translated
+            style: TextStyle(color: theme.textTheme.titleLarge?.color)),
+        content: Text(l10n.hotlineQuestion, // ✅ Translated
+            style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(l10n.notNow)), // ✅ Translated
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor),
+                backgroundColor: theme.colorScheme.primary),
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (_) => HotlinesScreen()));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => HotlinesScreen()));
             },
             child: Text(l10n.viewHotlines, // ✅ Translated
-                style: const TextStyle(color: Colors.white)),
+                style: TextStyle(
+                    color: isDark ? AppTheme.darkBackground : Colors.white)),
           ),
         ],
       ),
@@ -185,8 +205,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Helper for translations
+    // ✅ Helper for translations & Theme
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodyLarge?.color;
 
     return PopScope(
       canPop: false,
@@ -196,10 +218,14 @@ class _ChatScreenState extends State<ChatScreen> {
         if (shouldExit && mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor, // Adaptive background
         appBar: AppBar(
           centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           title: Text(l10n.chatTitle, // ✅ Translated
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+              style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+          iconTheme: IconThemeData(color: textColor),
           actions: [
             IconButton(
               icon: const Icon(Icons.history_edu_rounded),
@@ -234,8 +260,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                         if (!isSender)
                           IconButton(
-                            icon: const Icon(Icons.volume_up,
-                                size: 18, color: Colors.grey),
+                            icon: Icon(Icons.volume_up,
+                                size: 18,
+                                color: theme.colorScheme.secondary
+                                    .withOpacity(0.6)),
                             onPressed: () =>
                                 _flutterTts.speak(message['text']!),
                           ),
@@ -249,7 +277,7 @@ class _ChatScreenState extends State<ChatScreen> {
               const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: CircularProgressIndicator()),
-            _buildMessageComposer(l10n),
+            _buildMessageComposer(l10n), // Pass l10n
           ],
         ),
       ),
@@ -257,19 +285,39 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageComposer(AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(color: Colors.white),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface, // Adaptive surface
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          )
+        ],
+      ),
       child: SafeArea(
         child: Row(
           children: [
             Expanded(
               child: TextField(
                 controller: _controller,
+                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                 decoration: InputDecoration(
-                  hintText: _isListening ? l10n.listening : l10n.messageHint, // ✅ Translated
+                  hintText: _isListening
+                      ? l10n.listening
+                      : l10n.messageHint, // ✅ Translated
+                  hintStyle: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color
+                          ?.withOpacity(0.5)),
                   filled: true,
-                  fillColor: AppTheme.lightGray,
+                  fillColor: isDark
+                      ? AppTheme.darkBackground
+                      : AppTheme.lightGray, // Adaptive input fill
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(25),
                       borderSide: BorderSide.none),
@@ -278,11 +326,11 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             IconButton(
               icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
-                  color: _isListening ? Colors.red : AppTheme.primaryColor),
+                  color: _isListening ? Colors.red : theme.colorScheme.primary),
               onPressed: () => _toggleListening(l10n),
             ),
             IconButton(
-              icon: const Icon(Icons.send, color: AppTheme.primaryColor),
+              icon: Icon(Icons.send, color: theme.colorScheme.primary),
               onPressed: () => _sendMessage(l10n),
             ),
           ],

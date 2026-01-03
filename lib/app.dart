@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'utils/theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'package:renbo/utils/theme.dart';
 
 class RenboApp extends StatelessWidget {
   const RenboApp({super.key});

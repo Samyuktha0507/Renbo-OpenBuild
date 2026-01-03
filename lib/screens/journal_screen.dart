@@ -10,20 +10,19 @@ import 'package:flutter_tts/flutter_tts.dart';
 import '../services/journal_storage.dart';
 import '../models/journal_entry.dart';
 import '../widgets/sticker_picker_sheet.dart';
-import 'journal_entries.dart';
-import 'calendar_screen.dart'; 
+import 'calendar_screen.dart';
 import '../utils/theme.dart';
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class JournalScreen extends StatefulWidget {
-  final DateTime selectedDate; 
+  final DateTime selectedDate;
   final String emotion;
   final JournalEntry? existingEntry;
-  
+
   const JournalScreen({
-    Key? key, 
-    required this.selectedDate, 
+    Key? key,
+    required this.selectedDate,
     required this.emotion,
     this.existingEntry,
   }) : super(key: key);
@@ -35,7 +34,7 @@ class JournalScreen extends StatefulWidget {
 class _JournalScreenState extends State<JournalScreen> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  
+
   final AudioRecorder _audioRecorder = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
   final SpeechToText _speechToText = SpeechToText();
@@ -44,20 +43,22 @@ class _JournalScreenState extends State<JournalScreen> {
   File? pickedImage;
   String? recordedAudioPath;
   bool isRecording = false;
-  bool _isListening = false; 
+  bool _isListening = false;
 
-  List<JournalSticker> stickers = []; 
+  List<JournalSticker> stickers = [];
 
   @override
   void initState() {
     super.initState();
-    
+
     // PRE-FILL DATA IF EDITING
     if (widget.existingEntry != null) {
-      _titleController = TextEditingController(text: widget.existingEntry!.title);
-      _contentController = TextEditingController(text: widget.existingEntry!.content);
-      stickers = widget.existingEntry!.getStickers(); 
-      
+      _titleController =
+          TextEditingController(text: widget.existingEntry!.title);
+      _contentController =
+          TextEditingController(text: widget.existingEntry!.content);
+      stickers = widget.existingEntry!.getStickers();
+
       if (widget.existingEntry!.imagePath != null) {
         pickedImage = File(widget.existingEntry!.imagePath!);
       }
@@ -78,18 +79,22 @@ class _JournalScreenState extends State<JournalScreen> {
     _flutterTts.stop();
     super.dispose();
   }
-  
+
   void _saveEntry(AppLocalizations l10n) async {
     final title = _titleController.text.trim();
     final text = _contentController.text.trim();
 
-    if (title.isEmpty && text.isEmpty && pickedImage == null && recordedAudioPath == null && stickers.isEmpty) {
+    if (title.isEmpty &&
+        text.isEmpty &&
+        pickedImage == null &&
+        recordedAudioPath == null &&
+        stickers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.emptyEntryError)), // ✅ Translated
       );
       return;
     }
-    
+
     if (widget.existingEntry != null) {
       // UPDATE EXISTING ENTRY
       final entry = widget.existingEntry!;
@@ -98,18 +103,19 @@ class _JournalScreenState extends State<JournalScreen> {
       entry.imagePath = pickedImage?.path;
       entry.audioPath = recordedAudioPath;
       entry.setStickers(stickers);
-      
+
       await JournalStorage.updateEntry(entry);
-      
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.entryUpdated))); // ✅ Translated
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.entryUpdated))); // ✅ Translated
       }
     } else {
       // CREATE NEW ENTRY
       final entry = JournalEntry(
         title: title.isEmpty ? l10n.untitledEntry : title, // ✅ Translated
         content: text,
-        timestamp: widget.selectedDate, 
+        timestamp: widget.selectedDate,
         emotion: widget.emotion,
         imagePath: pickedImage?.path,
         audioPath: recordedAudioPath,
@@ -117,11 +123,11 @@ class _JournalScreenState extends State<JournalScreen> {
       entry.setStickers(stickers);
       await JournalStorage.addEntry(entry);
     }
-    
+
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const CalendarScreen()), 
+        MaterialPageRoute(builder: (_) => const CalendarScreen()),
         (route) => false,
       );
     }
@@ -142,9 +148,9 @@ class _JournalScreenState extends State<JournalScreen> {
         onStickerSelected: (path) {
           setState(() {
             stickers.add(JournalSticker(
-              path: path, 
-              x: 50, 
-              y: 200, 
+              path: path,
+              x: 50,
+              y: 200,
             ));
           });
         },
@@ -155,13 +161,20 @@ class _JournalScreenState extends State<JournalScreen> {
   Future<void> _startStopRecording() async {
     if (isRecording) {
       final path = await _audioRecorder.stop();
-      setState(() { isRecording = false; recordedAudioPath = path; });
+      setState(() {
+        isRecording = false;
+        recordedAudioPath = path;
+      });
     } else {
       if (await _audioRecorder.hasPermission()) {
         final dir = await getApplicationDocumentsDirectory();
-        final path = '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final path =
+            '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.m4a';
         await _audioRecorder.start(const RecordConfig(), path: path);
-        setState(() { isRecording = true; recordedAudioPath = null; });
+        setState(() {
+          isRecording = true;
+          recordedAudioPath = null;
+        });
       }
     }
   }
@@ -175,24 +188,37 @@ class _JournalScreenState extends State<JournalScreen> {
       if (available) {
         setState(() => _isListening = true);
         _speechToText.listen(onResult: (result) {
-          setState(() { _contentController.text = result.recognizedWords; });
+          setState(() {
+            _contentController.text = result.recognizedWords;
+          });
         });
       }
     }
   }
 
   Future<void> _speakText() async {
-    if (_contentController.text.isNotEmpty) await _flutterTts.speak(_contentController.text);
+    if (_contentController.text.isNotEmpty)
+      await _flutterTts.speak(_contentController.text);
   }
 
   @override
   Widget build(BuildContext context) {
+    // 🎨 Grab Dynamic Theme colors
+    final theme = Theme.of(context);
+    final scaffoldBg = theme.scaffoldBackgroundColor;
+    final primaryTextColor = theme.textTheme.titleLarge?.color;
+    final secondaryTextColor = theme.textTheme.bodyMedium?.color;
+    final surfaceColor = theme.colorScheme.surface;
+    final accentGreen = theme.colorScheme.primary;
+
     // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
-    
+
     final displayDate = widget.existingEntry?.timestamp ?? widget.selectedDate;
-    final dateStr = "${displayDate.day}/${displayDate.month}/${displayDate.year}";
-    
+    final dateStr =
+        "${displayDate.day}/${displayDate.month}/${displayDate.year}";
+
+    // Calculate required height for stickers
     double maxStickerY = 0;
     for (var s in stickers) {
       if (s.y > maxStickerY) maxStickerY = s.y;
@@ -200,21 +226,21 @@ class _JournalScreenState extends State<JournalScreen> {
     double requiredHeight = maxStickerY + 200;
 
     return Scaffold(
-      backgroundColor: AppTheme.oatMilk, 
+      backgroundColor: scaffoldBg, // Dynamic BG
       appBar: AppBar(
-        backgroundColor: AppTheme.oatMilk,
+        backgroundColor: scaffoldBg, // Dynamic App Bar BG
         title: Text(
-          widget.existingEntry != null ? l10n.editJournalEntry : "$dateStr • ${widget.emotion}", // ✅ Translated
-          style: const TextStyle(color: AppTheme.espresso, fontSize: 16)
-        ),
+            widget.existingEntry != null
+                ? l10n.editJournalEntry // ✅ Translated
+                : "$dateStr • ${widget.emotion}",
+            style: TextStyle(color: primaryTextColor, fontSize: 16)),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: AppTheme.espresso),
+        iconTheme: IconThemeData(color: primaryTextColor),
         elevation: 0,
         actions: [
           IconButton(
-            onPressed: () => _saveEntry(l10n), 
-            icon: const Icon(Icons.check, color: AppTheme.matchaGreen)
-          )
+              onPressed: () => _saveEntry(l10n),
+              icon: Icon(Icons.check, color: accentGreen))
         ],
       ),
       body: Column(
@@ -224,9 +250,10 @@ class _JournalScreenState extends State<JournalScreen> {
             child: SingleChildScrollView(
               child: Stack(
                 children: [
+                  // INVISIBLE SPACER to ensure canvas is big enough
                   Container(
-                    height: requiredHeight < MediaQuery.of(context).size.height 
-                        ? MediaQuery.of(context).size.height 
+                    height: requiredHeight < MediaQuery.of(context).size.height
+                        ? MediaQuery.of(context).size.height
                         : requiredHeight,
                     width: double.infinity,
                   ),
@@ -238,22 +265,38 @@ class _JournalScreenState extends State<JournalScreen> {
                       children: [
                         TextField(
                           controller: _titleController,
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.espresso),
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: primaryTextColor),
                           decoration: InputDecoration(
                             hintText: l10n.journalTitleHint, // ✅ Translated
+                            hintStyle: TextStyle(
+                                color: secondaryTextColor?.withOpacity(0.5)),
                             border: InputBorder.none,
                           ),
                         ),
-                        const Divider(color: AppTheme.cocoa),
+                        Divider(color: theme.dividerColor),
                         TextField(
                           controller: _contentController,
-                          maxLines: null, 
-                          style: const TextStyle(fontSize: 16, color: AppTheme.espresso, height: 1.5),
+                          maxLines: null,
+                          style: TextStyle(
+                              fontSize: 16,
+                              color: primaryTextColor,
+                              height: 1.5),
                           decoration: InputDecoration(
                             hintText: l10n.journalContentHint, // ✅ Translated
+                            hintStyle: TextStyle(
+                                color: secondaryTextColor?.withOpacity(0.5)),
                             border: InputBorder.none,
                           ),
                         ),
+                        if (pickedImage != null) ...[
+                          const SizedBox(height: 20),
+                          ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: Image.file(pickedImage!)),
+                        ],
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -276,17 +319,25 @@ class _JournalScreenState extends State<JournalScreen> {
                         },
                         child: Stack(
                           children: [
-                            Container(
-                              height: 120, width: 120,
+                            SizedBox(
+                              height: 120,
+                              width: 120,
                               child: _isEmoji(sticker.path)
-                                  ? Text(sticker.path, style: const TextStyle(fontSize: 80))
+                                  ? Text(sticker.path,
+                                      style: const TextStyle(fontSize: 80))
                                   : Image.asset(sticker.path),
                             ),
                             Positioned(
-                              right: 0, top: 0,
+                              right: 0,
+                              top: 0,
                               child: GestureDetector(
-                                onTap: () => setState(() => stickers.removeAt(idx)),
-                                child: const CircleAvatar(radius: 12, backgroundColor: Colors.red, child: Icon(Icons.close, size: 16, color: Colors.white)),
+                                onTap: () =>
+                                    setState(() => stickers.removeAt(idx)),
+                                child: const CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: Colors.red,
+                                    child: Icon(Icons.close,
+                                        size: 16, color: Colors.white)),
                               ),
                             ),
                           ],
@@ -299,13 +350,20 @@ class _JournalScreenState extends State<JournalScreen> {
             ),
           ),
 
-          // ELABORATE BUTTONS
+          // 🌙 DYNAMIC TOOLBAR
           Container(
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+              color: surfaceColor, // Switches from white to darkSurface
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(30)),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(
+                        theme.brightness == Brightness.dark ? 0.3 : 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5))
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -313,17 +371,28 @@ class _JournalScreenState extends State<JournalScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                      _toolButton(Icons.emoji_emotions_outlined, l10n.toolSticker, AppTheme.matchaGreen, _pickSticker), // ✅ Translated
-                      _toolButton(Icons.image_outlined, l10n.toolPhoto, AppTheme.matchaGreen, _pickImage), // ✅ Translated
-                      _toolButton(isRecording ? Icons.stop_circle : Icons.mic_none, isRecording ? l10n.stopRecording : l10n.toolVoice, isRecording ? Colors.red : AppTheme.matchaGreen, _startStopRecording), // ✅ Translated
+                    _toolButton(Icons.emoji_emotions_outlined, l10n.toolSticker,
+                        accentGreen, _pickSticker),
+                    _toolButton(Icons.image_outlined, l10n.toolPhoto,
+                        accentGreen, _pickImage),
+                    _toolButton(
+                        isRecording ? Icons.stop_circle : Icons.mic_none,
+                        isRecording ? l10n.stopRecording : l10n.toolVoice,
+                        isRecording ? Colors.red : accentGreen,
+                        _startStopRecording),
                   ],
                 ),
                 const SizedBox(height: 15),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                      _toolButton(_isListening ? Icons.mic_off : Icons.keyboard_voice, l10n.toolType, _isListening ? Colors.red : AppTheme.cocoa, _toggleListening), // ✅ Translated
-                      _toolButton(Icons.volume_up_outlined, l10n.toolRead, AppTheme.cocoa, _speakText), // ✅ Translated
+                    _toolButton(
+                        _isListening ? Icons.mic_off : Icons.keyboard_voice,
+                        l10n.toolType,
+                        _isListening ? Colors.red : AppTheme.cocoa,
+                        _toggleListening),
+                    _toolButton(Icons.volume_up_outlined, l10n.toolRead,
+                        AppTheme.cocoa, _speakText),
                   ],
                 ),
               ],
@@ -334,7 +403,8 @@ class _JournalScreenState extends State<JournalScreen> {
     );
   }
 
-  Widget _toolButton(IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _toolButton(
+      IconData icon, String label, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -342,13 +412,19 @@ class _JournalScreenState extends State<JournalScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1), 
-              shape: BoxShape.circle
-            ),
+                color: color.withOpacity(0.1), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 28),
           ),
           const SizedBox(height: 5),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.espresso)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.color) // Dynamic Label Color
+              ),
         ],
       ),
     );

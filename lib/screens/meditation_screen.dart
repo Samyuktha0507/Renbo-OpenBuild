@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:renbo/utils/theme.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
-import 'white_noise_synthesizer.dart';
-import 'breathing_guide_page.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/material.dart';
+import 'package:renbo/screens/breathing_guide_page.dart';
+import 'package:renbo/screens/white_noise_synthesizer.dart'; // ✅ Ensure this file exists at this path
+import 'package:renbo/utils/theme.dart';
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
@@ -17,284 +17,289 @@ class MeditationScreen extends StatefulWidget {
 class _MeditationScreenState extends State<MeditationScreen>
     with SingleTickerProviderStateMixin {
   final player = AudioPlayer();
-  late Timer _meditationTimer;
+  Timer? _meditationTimer;
 
   Duration _meditationTime = Duration.zero;
   bool _meditationTimerIsRunning = false;
 
+  final List<Map<String, String>> _tracks = [
+    {
+      'title': 'Rain Sounds',
+      'artist': 'Nature',
+      'path': 'audio/rain.mp3',
+    },
+    {
+      'title': 'Forest Ambience',
+      'artist': 'Nature',
+      'path': 'audio/forest.mp3',
+    },
+    {
+      'title': 'Ocean Waves',
+      'artist': 'Nature',
+      'path': 'audio/ocean.mp3',
+    },
+    {
+      'title': 'Tibetan Bowls',
+      'artist': 'Meditation',
+      'path': 'audio/bowls.mp3',
+    },
+  ];
+
+  int? _selectedTrackIndex;
   bool isPlaying = false;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
-
-  // Track data is now loaded inside build() to support translation
-  List<Map<String, String>> _tracks = [];
-
-  int? _selectedTrackIndex;
 
   @override
   void initState() {
     super.initState();
     player.onDurationChanged.listen((d) {
-      setState(() => duration = d);
+      if (mounted) setState(() => duration = d);
     });
     player.onPositionChanged.listen((p) {
-      setState(() => position = p);
+      if (mounted) setState(() => position = p);
     });
     player.onPlayerComplete.listen((event) {
-      setState(() {
-        isPlaying = false;
-        position = Duration.zero;
-      });
+      if (mounted) {
+        setState(() {
+          isPlaying = false;
+          position = Duration.zero;
+        });
+      }
     });
   }
 
   void _startMeditationTimer() {
     _meditationTimerIsRunning = true;
     _meditationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        _meditationTime += const Duration(seconds: 1);
-      });
+      if (mounted) {
+        setState(() {
+          _meditationTime += const Duration(seconds: 1);
+        });
+      }
     });
   }
 
   void _pauseMeditationTimer() {
     if (_meditationTimerIsRunning) {
       _meditationTimerIsRunning = false;
-      _meditationTimer.cancel();
+      _meditationTimer?.cancel();
+      if (mounted) setState(() {});
     }
   }
 
   void _resetMeditationTimer() {
-    if (_meditationTimerIsRunning) {
-      _meditationTimer.cancel();
-    }
+    _meditationTimer?.cancel();
     setState(() {
       _meditationTime = Duration.zero;
       _meditationTimerIsRunning = false;
     });
   }
 
-  String _formatDuration(Duration d) {
+  String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(d.inMinutes.remainder(60));
-    final seconds = twoDigits(d.inSeconds.remainder(60));
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
     return "$minutes:$seconds";
   }
 
   @override
   void dispose() {
     player.dispose();
-    if (_meditationTimerIsRunning) _meditationTimer.cancel();
+    _meditationTimer?.cancel();
     super.dispose();
   }
 
+  void _togglePlayPause() async {
+    if (isPlaying) {
+      await player.pause();
+    } else {
+      if (_selectedTrackIndex != null) {
+        await player.resume();
+      }
+    }
+    setState(() {
+      isPlaying = !isPlaying;
+    });
+  }
+
   void _selectTrack(int index) async {
-    if (_selectedTrackIndex == index) {
+    if (_selectedTrackIndex == index && isPlaying) {
       _togglePlayPause();
       return;
     }
 
-    await player.stop();
-    setState(() {
-      _selectedTrackIndex = index;
-      isPlaying = true;
-      position = Duration.zero;
-      duration = Duration.zero;
-    });
+    _selectedTrackIndex = index;
+    isPlaying = true;
 
     final selectedTrackPath = _tracks[index]['path']!;
     await player.setSource(AssetSource(selectedTrackPath));
     await player.setReleaseMode(ReleaseMode.loop); 
     await player.resume();
-  }
-
-  void _togglePlayPause() async {
-    if (_selectedTrackIndex == null) return;
-    if (isPlaying) {
-      await player.pause();
-    } else {
-      await player.resume();
-    }
-    setState(() => isPlaying = !isPlaying);
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Helper for translations
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.titleLarge?.color;
+    final primaryGreen = theme.colorScheme.primary;
     final l10n = AppLocalizations.of(context)!;
 
-    // ✅ Define tracks here to use translations
-    _tracks = [
-      {
-        'title': 'Zen Meditation',
-        'artist': 'Inner Peace',
-        'path': 'audio/zen.mp3',
-      },
-      {
-        'title': 'Soul Music',
-        'artist': 'Nature Sounds',
-        'path': 'audio/soul.mp3',
-      },
-      {
-        'title': 'Rain Melody',
-        'artist': 'Relaxing Rain Rhythms',
-        'path': 'audio/rain.mp3',
-      },
-    ];
-
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
         title: Text(
-          l10n.meditation, // ✅ Translated
-          style: const TextStyle(
-            color: AppTheme.darkGray,
-            fontWeight: FontWeight.bold,
-          ),
+          l10n.meditation,
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (context) => const BreathingGuidePage()),
-                    );
-                  },
-                  icon: const Icon(Icons.self_improvement),
-                  label: Text(l10n.breathingGuide), // ✅ Translated
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              const WhiteNoiseSynthesizerScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.graphic_eq),
-                  label: Text(l10n.whiteNoise), // ✅ Translated
-                ),
+                _buildActionChip(context, l10n.breathingGuide, Icons.self_improvement, () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BreathingGuidePage()));
+                }),
+                _buildActionChip(context, l10n.whiteNoise, Icons.graphic_eq, () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) =>  WhiteNoiseSynthesizerScreen()));
+                }),
               ],
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FloatingActionButton.extended(
-                  heroTag: 'meditation-timer-control',
-                  onPressed: _meditationTimerIsRunning
-                      ? _pauseMeditationTimer
-                      : _startMeditationTimer,
-                  label: Text(_meditationTimerIsRunning ? l10n.pauseBreathing : l10n.start), // ✅ Translated
-                  icon: Icon(_meditationTimerIsRunning
-                      ? Icons.pause
-                      : Icons.play_arrow),
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                ),
-                const SizedBox(width: 16),
-                FloatingActionButton.extended(
-                  heroTag: 'meditation-timer-reset',
-                  onPressed: _resetMeditationTimer,
-                  label: Text(l10n.reset), // ✅ Translated
-                  icon: const Icon(Icons.refresh),
-                  backgroundColor: AppTheme.darkGray,
-                  foregroundColor: Colors.white,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Center(
-              child: Text(
-                _formatDuration(_meditationTime),
-                style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkGray),
+            const SizedBox(height: 30),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    _formatDuration(_meditationTime),
+                    style: TextStyle(fontSize: 48, fontWeight: FontWeight.w300, letterSpacing: 2, color: textColor),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: _meditationTimerIsRunning ? _pauseMeditationTimer : _startMeditationTimer,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryGreen,
+                          foregroundColor: isDark ? AppTheme.darkBackground : Colors.white,
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(_meditationTimerIsRunning ? Icons.pause : Icons.play_arrow),
+                            const SizedBox(width: 8),
+                            // ✅ Fixed: using pauseBreathing key from ARB
+                            Text(_meditationTimerIsRunning ? l10n.pauseBreathing : l10n.start),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton(
+                        onPressed: _resetMeditationTimer,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? Colors.white10 : AppTheme.espresso.withValues(alpha: 0.1),
+                          foregroundColor: textColor,
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.refresh, size: 20),
+                            const SizedBox(width: 8),
+                            Text(l10n.reset),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             Text(
-              l10n.chooseTrack, // ✅ Translated
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.darkGray,
-              ),
+              l10n.chooseTrack,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
             ),
             const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
+                physics: const BouncingScrollPhysics(),
                 itemCount: _tracks.length,
-                itemBuilder: (context, index) {
-                  return _buildTrackCard(index);
-                },
+                itemBuilder: (context, index) => _buildTrackCard(index),
               ),
             ),
-            if (_selectedTrackIndex != null)
-              Column(
-                children: [
-                  Slider(
-                    min: 0,
-                    max: duration.inSeconds.toDouble(),
-                    value: position.inSeconds.toDouble(),
-                    onChanged: (value) async {
-                      final newPosition = Duration(seconds: value.toInt());
-                      await player.seek(newPosition);
-                    },
-                    activeColor: AppTheme.primaryColor,
-                    inactiveColor: AppTheme.primaryColor.withOpacity(0.3),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(_formatDuration(position)),
-                        Text(_formatDuration(duration)),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _togglePlayPause,
-                    iconSize: 80,
-                    color: AppTheme.primaryColor,
-                    icon: Icon(
-                      isPlaying
-                          ? Icons.pause_circle_filled
-                          : Icons.play_circle_fill,
-                    ),
-                  ),
-                ],
-              ),
+            if (_selectedTrackIndex != null) _buildMiniPlayer(theme, primaryGreen),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildActionChip(BuildContext context, String label, IconData iconData, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
+    return ActionChip(
+      onPressed: onTap,
+      avatar: Icon(iconData, size: 18, color: primary),
+      label: Text(label),
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+      shape: StadiumBorder(side: BorderSide(color: primary.withValues(alpha: 0.2))),
+    );
+  }
+
+  Widget _buildMiniPlayer(ThemeData theme, Color primaryGreen) {
+    return Column(
+      children: [
+        Slider(
+          min: 0,
+          max: duration.inSeconds.toDouble(),
+          value: position.inSeconds.toDouble(),
+          onChanged: (value) async => await player.seek(Duration(seconds: value.toInt())),
+          activeColor: primaryGreen,
+          inactiveColor: primaryGreen.withValues(alpha: 0.2),
+        ),
+        IconButton(
+          onPressed: _togglePlayPause,
+          iconSize: 64,
+          color: primaryGreen,
+          icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTrackCard(int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final track = _tracks[index];
     final isSelected = _selectedTrackIndex == index;
+    final textColor = theme.textTheme.bodyLarge?.color;
 
     return Card(
-      elevation: isSelected ? 8 : 2,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      color: isSelected ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.1) : theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: isSelected
-            ? const BorderSide(color: AppTheme.primaryColor, width: 2)
-            : BorderSide.none,
+        side: BorderSide(color: isSelected ? theme.colorScheme.primary : Colors.transparent),
       ),
       child: InkWell(
         onTap: () => _selectTrack(index),
@@ -303,43 +308,29 @@ class _MeditationScreenState extends State<MeditationScreen>
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              Icon(
-                isSelected ? Icons.music_note : Icons.music_note_outlined,
-                color: isSelected ? AppTheme.primaryColor : AppTheme.darkGray,
-                size: 30,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isSelected ? theme.colorScheme.primary : theme.scaffoldBackgroundColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isSelected ? Icons.graphic_eq : Icons.music_note_outlined,
+                  color: isSelected ? (isDark ? AppTheme.darkBackground : Colors.white) : textColor?.withValues(alpha: 0.5),
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      track['title']!,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected
-                            ? AppTheme.primaryColor
-                            : AppTheme.darkGray,
-                      ),
-                    ),
-                    Text(
-                      track['artist']!,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.mediumGray,
-                      ),
-                    ),
+                    Text(track['title']!, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+                    Text(track['artist']!, style: TextStyle(fontSize: 12, color: textColor?.withValues(alpha: 0.6))),
                   ],
                 ),
               ),
-              if (isSelected)
-                Icon(
-                  isPlaying
-                      ? Icons.pause_circle_filled
-                      : Icons.play_circle_fill,
-                  color: AppTheme.primaryColor,
-                ),
+              if (isSelected && isPlaying) Icon(Icons.volume_up, color: theme.colorScheme.primary, size: 20),
             ],
           ),
         ),

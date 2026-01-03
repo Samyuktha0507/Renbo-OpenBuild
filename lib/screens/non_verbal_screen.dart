@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:renbo/utils/theme.dart';
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
@@ -58,6 +59,7 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
   }
 
   Color _getMoodColor() {
+    // Maps intensity to a spectrum from Calm Blue to Energetic Orange/Red
     return Color.lerp(
       const Color(0xFF8E97FD), // Calm Purple/Blue
       const Color(0xFFFF8C69), // Warm Orange
@@ -67,21 +69,32 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
 
   @override
   Widget build(BuildContext context) {
+    // 🎨 Dynamic Theme Colors
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.bodyLarge?.color;
+
     // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
-    
+
     // Clean up old points to keep performance high
     _points.removeWhere(
         (p) => DateTime.now().difference(p.timestamp).inMilliseconds > 2000);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor, // Adaptive Background
       appBar: AppBar(
-        title: Text(l10n.zenSpaceTitle, style: const TextStyle(fontFamily: 'Poppins')), // ✅ Translated
+        title: Text(
+          l10n.zenSpaceTitle, // ✅ Translated
+          style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins'),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(Icons.close, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -96,7 +109,10 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
               builder: (context, child) {
                 return CustomPaint(
                   painter: SessionPainter(
-                      points: _points, animationValue: _controller.value),
+                    points: _points,
+                    animationValue: _controller.value,
+                    isDark: isDark, // ✅ Pass Theme mode
+                  ),
                   size: Size.infinite,
                 );
               },
@@ -113,12 +129,21 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
+                  // ☕ Adaptive Surface Color
+                  color: theme.colorScheme.surface.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: textColor!.withOpacity(0.1),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   l10n.zenInstructions, // ✅ Translated
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  style: TextStyle(
+                    color: textColor.withOpacity(0.6),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
@@ -145,6 +170,7 @@ class _NonVerbalSessionScreenState extends State<NonVerbalSessionScreen>
                 Slider(
                   value: _intensity,
                   activeColor: _getMoodColor(),
+                  inactiveColor: _getMoodColor().withOpacity(0.2),
                   onChanged: (val) {
                     setState(() => _intensity = val);
                   },
@@ -177,8 +203,13 @@ class TouchPoint {
 class SessionPainter extends CustomPainter {
   final List<TouchPoint> points;
   final double animationValue;
+  final bool isDark;
 
-  SessionPainter({required this.points, required this.animationValue});
+  SessionPainter({
+    required this.points,
+    required this.animationValue,
+    required this.isDark,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -191,12 +222,22 @@ class SessionPainter extends CustomPainter {
       final paint = Paint()
         ..color = point.color.withOpacity(opacity)
         ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+        // ✨ Increased blur for a better "Glow" effect in dark mode
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, isDark ? 15 : 10);
 
       if (point.isPulse) {
         // Drawing a growing pulse
         final pulseSize = point.size * (1 + (animationValue * 0.2));
         canvas.drawCircle(point.position, pulseSize, paint);
+
+        // Secondary outer glow for dark mode
+        if (isDark) {
+          canvas.drawCircle(
+            point.position,
+            pulseSize * 1.2,
+            paint..color = point.color.withOpacity(opacity * 0.3),
+          );
+        }
       } else {
         // Drawing a expanding ripple
         final rippleSize = point.size + (age / 10);

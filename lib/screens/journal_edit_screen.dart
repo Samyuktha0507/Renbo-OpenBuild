@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import '../services/journal_storage.dart';
 import '../models/journal_entry.dart';
+import '../utils/theme.dart'; // Ensure this is imported
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
@@ -52,9 +53,9 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
     }
 
     final updatedEntry = JournalEntry(
-      id: widget.entry.id,
+      id: widget.entry.id, // Pass existing ID to update
       content: text,
-      timestamp: widget.entry.timestamp,
+      timestamp: widget.entry.timestamp, // Keep original timestamp
       emotion: widget.entry.emotion,
       imagePath: pickedImage?.path,
       audioPath: recordedAudioPath,
@@ -62,7 +63,7 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
 
     await JournalStorage.updateEntry(updatedEntry);
 
-    Navigator.of(context).pop();
+    if (mounted) Navigator.of(context).pop();
   }
 
   Future<void> _pickImage() async {
@@ -80,7 +81,7 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.recordingStopped))); // ✅ Translated
+            .showSnackBar(SnackBar(content: Text(l10n.recordingStopped)));
       }
     } else {
       if (await _audioRecorder.hasPermission()) {
@@ -92,12 +93,12 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
         setState(() => isRecording = true);
         if (mounted) {
           ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(l10n.recordingStarted))); // ✅ Translated
+              .showSnackBar(SnackBar(content: Text(l10n.recordingStarted)));
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(l10n.permissionDenied))); // ✅ Translated
+              .showSnackBar(SnackBar(content: Text(l10n.permissionDenied)));
         }
       }
     }
@@ -105,16 +106,26 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 🎨 Dynamic Theme Colors
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final scaffoldBg = theme.scaffoldBackgroundColor;
+    final surfaceColor = theme.colorScheme.surface;
+    final textColor = theme.textTheme.bodyLarge?.color;
+    final primaryGreen = theme.colorScheme.primary;
+
     // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF5F2),
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
         title: Text(l10n.editJournalEntry, // ✅ Translated
-            style: const TextStyle(color: Colors.white)),
+            style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: const Color(0xFF568F87),
+        backgroundColor: scaffoldBg,
+        elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
       ),
       body: Padding(
         padding: const EdgeInsets.all(18.0),
@@ -128,16 +139,19 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
                     maxLines: null,
                     expands: true,
                     textAlignVertical: TextAlignVertical.top,
+                    style: TextStyle(color: textColor),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: surfaceColor,
                       hintText: l10n.editEntryHint, // ✅ Translated
+                      hintStyle: TextStyle(color: textColor?.withOpacity(0.5)),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
                     ),
                   ),
+                  // Image Preview Logic
                   if (pickedImage != null)
                     Positioned.fill(
                         child: Image.file(pickedImage!, fit: BoxFit.cover))
@@ -149,6 +163,28 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
                                 fit: BoxFit.cover)
                             : Image.file(File(widget.entry.imagePath!),
                                 fit: BoxFit.cover)),
+                  
+                  // Small thumbnail if image exists (overlay style)
+                  if (pickedImage != null ||
+                      (widget.entry.imagePath?.isNotEmpty ?? false))
+                    Positioned(
+                      bottom: 10,
+                      right: 10,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: SizedBox(
+                          width: 100,
+                          height: 100,
+                          child: pickedImage != null
+                              ? Image.file(pickedImage!, fit: BoxFit.cover)
+                              : (widget.entry.imagePath!.startsWith('http')
+                                  ? Image.network(widget.entry.imagePath!,
+                                      fit: BoxFit.cover)
+                                  : Image.file(File(widget.entry.imagePath!),
+                                      fit: BoxFit.cover)),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -156,42 +192,60 @@ class _JournalEditScreenState extends State<JournalEditScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton.icon(
+                _buildActionButton(
                   onPressed: () => _startStopRecording(l10n),
-                  icon: Icon(isRecording ? Icons.stop : Icons.mic,
-                      color: Colors.white),
-                  label: Text(isRecording ? l10n.stopRecording : l10n.recordAudio, // ✅ Translated
-                      style: const TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isRecording ? Colors.red : const Color(0xFF568F87),
-                  ),
+                  icon: isRecording ? Icons.stop : Icons.mic,
+                  label: isRecording ? l10n.stopRecording : l10n.recordAudio, // ✅ Translated
+                  color: isRecording ? Colors.red : primaryGreen,
+                  textColor: isDark ? AppTheme.darkBackground : Colors.white,
                 ),
-                ElevatedButton.icon(
+                _buildActionButton(
                   onPressed: _pickImage,
-                  icon: const Icon(Icons.image, color: Colors.white),
-                  label: Text(l10n.changeImage, // ✅ Translated
-                      style: const TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF568F87)),
+                  icon: Icons.image,
+                  label: l10n.changeImage, // ✅ Translated
+                  color: primaryGreen,
+                  textColor: isDark ? AppTheme.darkBackground : Colors.white,
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF568F87),
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18)),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryGreen,
+                  foregroundColor:
+                      isDark ? AppTheme.darkBackground : Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
+                ),
+                onPressed: () => _saveEntry(l10n),
+                child: Text(l10n.saveChanges, // ✅ Translated
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
-              onPressed: () => _saveEntry(l10n),
-              child: Text(l10n.saveChanges), // ✅ Translated
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color textColor,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: textColor, size: 20),
+      label: Text(label, style: TextStyle(color: textColor, fontSize: 12)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

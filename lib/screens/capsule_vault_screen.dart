@@ -5,6 +5,7 @@ import '../models/time_capsule.dart';
 import '../providers/capsule_provider.dart';
 import '../widgets/capsule_card.dart';
 import 'create_capsule_screen.dart';
+import '../utils/theme.dart'; // Import your theme file
 // ✅ Import Translations
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
@@ -25,6 +26,12 @@ class CapsuleVaultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🎨 Dynamic Theme Colors
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.titleLarge?.color;
+    final primaryAccent = theme.colorScheme.primary;
+
     // ✅ Helper for translations
     final l10n = AppLocalizations.of(context)!;
 
@@ -42,23 +49,31 @@ class CapsuleVaultScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          elevation: 0,
+          iconTheme: IconThemeData(color: textColor),
           title: Text(
-            l10n.vaultTitle, // ✅ Translated
-            style: const TextStyle(
-                fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+            l10n.vaultTitle, // ✅ Translated "Emotional Vault"
+            style: TextStyle(
+              color: textColor,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
+            ),
           ),
           bottom: TabBar(
             tabs: [
               Tab(
-                  text: l10n.tabUnlocked,
-                  icon: const Icon(Icons.lock_open)), // ✅ Translated
+                  text: l10n.tabUnlocked, // ✅ Translated
+                  icon: const Icon(Icons.lock_open)),
               Tab(
-                  text: l10n.tabLocked,
-                  icon: const Icon(Icons.lock_outline)), // ✅ Translated
+                  text: l10n.tabLocked, // ✅ Translated
+                  icon: const Icon(Icons.lock_outline)),
             ],
-            indicatorColor: const Color(0xFF8E97FD),
-            labelColor: const Color(0xFF8E97FD),
+            indicatorColor: primaryAccent,
+            labelColor: primaryAccent,
+            unselectedLabelColor: textColor?.withOpacity(0.5),
           ),
         ),
         body: TabBarView(
@@ -68,13 +83,14 @@ class CapsuleVaultScreen extends StatelessWidget {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: const Color(0xFF8E97FD),
+          backgroundColor: primaryAccent,
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (context) => const CreateCapsuleScreen()),
           ),
-          child: const Icon(Icons.add, color: Colors.white),
+          child: Icon(Icons.add,
+              color: isDark ? AppTheme.darkBackground : Colors.white),
         ),
       ),
     );
@@ -82,14 +98,19 @@ class CapsuleVaultScreen extends StatelessWidget {
 
   Widget _buildList(
       BuildContext context, List<TimeCapsule> list, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+
     if (list.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Text(
-            l10n.vaultEmpty, // ✅ Translated
+            l10n.vaultEmpty, // ✅ Translated "Your vault is empty"
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey, fontFamily: 'Poppins'),
+            style: TextStyle(
+              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+              fontFamily: 'Poppins',
+            ),
           ),
         ),
       );
@@ -101,7 +122,7 @@ class CapsuleVaultScreen extends StatelessWidget {
       itemBuilder: (context, index) {
         final capsule = list[index];
 
-        // Check readiness exactly when the item is rendered/tapped
+        // CRITICAL FIX: Re-check readiness exactly when the item is rendered/tapped
         final bool isReadyNow = DateTime.now().isAfter(capsule.deliveryDate);
 
         return CapsuleCard(
@@ -114,13 +135,13 @@ class CapsuleVaultScreen extends StatelessWidget {
               // Show time remaining if it's still in the future
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  // ✅ Translated with dynamic parameter
                   content: Text(l10n.patienceMessage(
-                      _getTimeRemainingText(capsule, l10n))),
+                      _getTimeRemainingText(capsule, l10n))), // ✅ Translated
                   duration: const Duration(seconds: 2),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
+                  backgroundColor: theme.colorScheme.surface,
                 ),
               );
             }
@@ -132,6 +153,9 @@ class CapsuleVaultScreen extends StatelessWidget {
 
   void _showContent(
       BuildContext context, TimeCapsule capsule, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     // ✅ Format date based on current language locale
     final dateStr = DateFormat('MMMM dd, yyyy', l10n.localeName)
         .format(capsule.createdAt);
@@ -139,7 +163,7 @@ class CapsuleVaultScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface, // Adaptive background
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
@@ -159,29 +183,33 @@ class CapsuleVaultScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              l10n.messageFromPast, // ✅ Translated
-              style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Poppins'),
+              l10n.messageFromPast, // ✅ Translated "A Message from the Past"
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.titleLarge?.color,
+                fontFamily: 'Poppins',
+              ),
             ),
             const SizedBox(height: 15),
             Text(
               capsule.content,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontStyle: FontStyle.italic,
                 height: 1.5,
-                color: Colors.black87,
+                color: theme.textTheme.bodyLarge?.color,
               ),
             ),
             const SizedBox(height: 30),
-            Divider(color: Colors.grey[300]),
+            Divider(color: theme.dividerColor),
             const SizedBox(height: 10),
             Text(
-              l10n.sealedOn(dateStr), // ✅ Translated
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              l10n.sealedOn(dateStr), // ✅ Translated "Sealed on ..."
+              style: TextStyle(
+                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.5),
+                  fontSize: 13),
             ),
             const SizedBox(height: 30),
             SizedBox(
@@ -189,13 +217,19 @@ class CapsuleVaultScreen extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8E97FD),
+                  backgroundColor: theme.colorScheme.primary,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15)),
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
-                child: Text(l10n.close, // ✅ Translated
-                    style: const TextStyle(color: Colors.white, fontSize: 16)),
+                child: Text(
+                  l10n.close, // ✅ Translated
+                  style: TextStyle(
+                    color: isDark ? AppTheme.darkBackground : Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ],
