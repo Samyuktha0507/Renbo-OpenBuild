@@ -7,11 +7,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the code
+
+RUN python -m nltk.downloader vader_lexicon
+
 COPY . .
 
-# Expose the port
 EXPOSE 8080
 
-# Run the app (Change "app:app" if your Flask instance is named differently)
-CMD ["python", "app.py"]
+CMD ["python", "app.py", "gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
