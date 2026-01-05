@@ -56,25 +56,29 @@ class AppLocalizationsTe extends AppLocalizations {
   String get hydrate => 'నీరు త్రాగండి';
 
   @override
-  String get hydrateDesc => 'నీరు శరీరానికి ఇంధనం. చిన్న సిప్ కూడా మీకు శక్తినిస్తుంది.';
+  String get hydrateDesc =>
+      'నీరు శరీరానికి ఇంధనం. చిన్న సిప్ కూడా మీకు శక్తినిస్తుంది.';
 
   @override
   String get nourish => 'పోషణ';
 
   @override
-  String get nourishDesc => 'మీ భావోద్వేగాలను ఎదుర్కోవడానికి శరీరానికి శక్తి అవసరం.';
+  String get nourishDesc =>
+      'మీ భావోద్వేగాలను ఎదుర్కోవడానికి శరీరానికి శక్తి అవసరం.';
 
   @override
   String get rest => 'విశ్రాంతి';
 
   @override
-  String get restDesc => 'ఆగడం తప్పు కాదు. కోలుకోవడానికి ప్రశాంతమైన క్షణాలు అవసరం.';
+  String get restDesc =>
+      'ఆగడం తప్పు కాదు. కోలుకోవడానికి ప్రశాంతమైన క్షణాలు అవసరం.';
 
   @override
   String get breathe => 'శ్వాస';
 
   @override
-  String get breatheDesc => 'ఒక లోతైన శ్వాస తీసుకోండి. అది మిమ్మల్ని స్థిరపరుస్తుంది.';
+  String get breatheDesc =>
+      'ఒక లోతైన శ్వాస తీసుకోండి. అది మిమ్మల్ని స్థిరపరుస్తుంది.';
 
   @override
   String get journal => 'జర్నల్';
@@ -110,7 +114,8 @@ class AppLocalizationsTe extends AppLocalizations {
   String get loadingThought => 'కొత్త ఆలోచన లోడ్ అవుతోంది...';
 
   @override
-  String get defaultThought => 'భవిష్యత్తును అంచనా వేయడానికి ఉత్తమ మార్గం దానిని సృష్టించడమే.';
+  String get defaultThought =>
+      'భవిష్యత్తును అంచనా వేయడానికి ఉత్తమ మార్గం దానిని సృష్టించడమే.';
 
   @override
   String get breathingGuide => 'శ్వాస మార్గదర్శి';
@@ -388,13 +393,16 @@ class AppLocalizationsTe extends AppLocalizations {
   String get permissionDenied => 'అనుమతి నిరాకరించబడింది';
 
   @override
-  String get emptyEntryError => 'సేవ్ చేయడానికి ముందు దయచేసి రాయండి, రికార్డ్ చేయండి లేదా చిత్రాన్ని జోడించండి.';
+  String get emptyEntryError =>
+      'సేవ్ చేయడానికి ముందు దయచేసి రాయండి, రికార్డ్ చేయండి లేదా చిత్రాన్ని జోడించండి.';
 
   @override
-  String get noEntriesYet => 'ఇంకా ఎంట్రీలు లేవు.\nఈ రోజే మీ ప్రయాణం ప్రారంభించండి!';
+  String get noEntriesYet =>
+      'ఇంకా ఎంట్రీలు లేవు.\nఈ రోజే మీ ప్రయాణం ప్రారంభించండి!';
 
   @override
-  String get noEntriesForDay => 'ఈ రోజు ఎంట్రీలు లేవు.\nరాయడానికి ఇక్కడ నొక్కండి!';
+  String get noEntriesForDay =>
+      'ఈ రోజు ఎంట్రీలు లేవు.\nరాయడానికి ఇక్కడ నొక్కండి!';
 
   @override
   String get monthLabel => 'నెల';
@@ -442,58 +450,73 @@ class AppLocalizationsTe extends AppLocalizations {
   String get moodPulseTitle => 'మూడ్ పల్స్';
 
   @override
-  String get defaultFeedback => 'మీరు ఎలా ఉన్నారో చూపించడానికి స్లైడర్‌లను జరపండి.';
+  String get defaultFeedback =>
+      'మీరు ఎలా ఉన్నారో చూపించడానికి స్లైడర్‌లను జరపండి.';
 
   @override
   String get defaultAdvice => 'మనం ఒక్కో అడుగు ముందుకు వేయవచ్చు.';
 
   @override
-  String get feedbackOverwhelmed => 'అంతా గందరగోళంగా ఉంది. ఇది అధిక తీవ్రతతో కూడిన అలజడి.';
+  String get feedbackOverwhelmed =>
+      'అంతా గందరగోళంగా ఉంది. ఇది అధిక తీవ్రతతో కూడిన అలజడి.';
 
   @override
-  String get adviceGrounding => 'సలహా: ఇప్పుడు మీ పని కేవలం ఊపిరి పీల్చుకోవడం. 5-4-3-2-1 టెక్నిక్‌ని ప్రయత్నించండి.';
+  String get adviceGrounding =>
+      'సలహా: ఇప్పుడు మీ పని కేవలం ఊపిరి పీల్చుకోవడం. 5-4-3-2-1 టెక్నిక్‌ని ప్రయత్నించండి.';
 
   @override
-  String get feedbackSharp => 'మీరు తీవ్రమైన బాధ లేదా నిరాశను అనుభవిస్తున్నారు.';
+  String get feedbackSharp =>
+      'మీరు తీవ్రమైన బాధ లేదా నిరాశను అనుభవిస్తున్నారు.';
 
   @override
-  String get adviceExitEnergy => 'సలహా: ఈ శక్తి బయటకు పోవాలి. చల్లటి నీటితో ముఖం కడుక్కోండి.';
+  String get adviceExitEnergy =>
+      'సలహా: ఈ శక్తి బయటకు పోవాలి. చల్లటి నీటితో ముఖం కడుక్కోండి.';
 
   @override
-  String get feedbackHeavy => 'మీరు భారీ బరువును మోస్తున్నారు. కారణం తెలియడం లేదు.';
+  String get feedbackHeavy =>
+      'మీరు భారీ బరువును మోస్తున్నారు. కారణం తెలియడం లేదు.';
 
   @override
-  String get adviceComfort => 'సలహా: ఈ అలజడితో పోరాడవద్దు. చిన్న చిన్న సౌకర్యాలపై దృష్టి పెట్టండి - వేడి పానీయం లేదా మృదువైన దుప్పటి.';
+  String get adviceComfort =>
+      'సలహా: ఈ అలజడితో పోరాడవద్దు. చిన్న చిన్న సౌకర్యాలపై దృష్టి పెట్టండి - వేడి పానీయం లేదా మృదువైన దుప్పటి.';
 
   @override
   String get feedbackSadness => 'ప్రశాంతమైన, స్పష్టమైన విచారం ఉంది.';
 
   @override
-  String get adviceValidate => 'సలహా: దీనితో ఉండటం తప్పు కాదు. ఈ బరువును వర్ణించే మూడు పదాలను రాయండి.';
+  String get adviceValidate =>
+      'సలహా: దీనితో ఉండటం తప్పు కాదు. ఈ బరువును వర్ణించే మూడు పదాలను రాయండి.';
 
   @override
-  String get feedbackHaze => 'మీరు మానసిక గందరగోళంలో ఉన్నారు. విషయాలు దూరంగా అనిపిస్తున్నాయి.';
+  String get feedbackHaze =>
+      'మీరు మానసిక గందరగోళంలో ఉన్నారు. విషయాలు దూరంగా అనిపిస్తున్నాయి.';
 
   @override
-  String get adviceDigitalFast => 'సలహా: మీ మెదడు అలసిపోయి ఉండవచ్చు. 10 నిమిషాల పాటు ఫోన్‌ను పక్కన పెట్టండి.';
+  String get adviceDigitalFast =>
+      'సలహా: మీ మెదడు అలసిపోయి ఉండవచ్చు. 10 నిమిషాల పాటు ఫోన్‌ను పక్కన పెట్టండి.';
 
   @override
   String get feedbackFlow => 'మీరు అందమైన ప్రవాహం మరియు స్పష్టతలో ఉన్నారు.';
 
   @override
-  String get adviceCreativity => 'సలహా: సృజనాత్మకతకు ఇది గొప్ప సమయం. ఈ కాంతిని మీ తదుపరి పనికి తీసుకెళ్లండి.';
+  String get adviceCreativity =>
+      'సలహా: సృజనాత్మకతకు ఇది గొప్ప సమయం. ఈ కాంతిని మీ తదుపరి పనికి తీసుకెళ్లండి.';
 
   @override
-  String get feedbackDreamy => 'మీరు మృదువైన, కలల వంటి ఆనందాన్ని అనుభవిస్తున్నారు.';
+  String get feedbackDreamy =>
+      'మీరు మృదువైన, కలల వంటి ఆనందాన్ని అనుభవిస్తున్నారు.';
 
   @override
-  String get adviceDaydream => 'సలహా: పగటి కలలు కనండి. ఇప్పుడు మీరు పని చేయాల్సిన అవసరం లేదు.';
+  String get adviceDaydream =>
+      'సలహా: పగటి కలలు కనండి. ఇప్పుడు మీరు పని చేయాల్సిన అవసరం లేదు.';
 
   @override
-  String get feedbackBalanced => 'మీరు స్థిరమైన, మధ్యస్థ స్థితిలో సమతుల్యతను పొందుతున్నారు.';
+  String get feedbackBalanced =>
+      'మీరు స్థిరమైన, మధ్యస్థ స్థితిలో సమతుల్యతను పొందుతున్నారు.';
 
   @override
-  String get adviceCheckBody => 'సలహా: మీ శరీరాన్ని గమనించండి. మీ భుజాలు బిగుతుగా ఉంటే వాటిని వదులు చేయండి.';
+  String get adviceCheckBody =>
+      'సలహా: మీ శరీరాన్ని గమనించండి. మీ భుజాలు బిగుతుగా ఉంటే వాటిని వదులు చేయండి.';
 
   @override
   String get labelFoggy => 'మబ్బుగా';
@@ -618,5 +641,6 @@ class AppLocalizationsTe extends AppLocalizations {
   String get add => 'జోడించు';
 
   @override
-  String get noGratitudes => 'కృతజ్ఞతలు ఏమీ లేవు. తేలియాడటం చూడటానికి ఒకదాన్ని జోడించండి!';
+  String get noGratitudes =>
+      'కృతజ్ఞతలు ఏమీ లేవు. తేలియాడటం చూడటానికి ఒకదాన్ని జోడించండి!';
 }

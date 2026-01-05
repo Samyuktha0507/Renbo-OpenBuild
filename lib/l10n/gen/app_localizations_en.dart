@@ -56,25 +56,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hydrate => 'Hydrate';
 
   @override
-  String get hydrateDesc => 'Water is fuel for resilience. Even a small sip can help clear the fog.';
+  String get hydrateDesc =>
+      'Water is fuel for resilience. Even a small sip can help clear the fog.';
 
   @override
   String get nourish => 'Nourish';
 
   @override
-  String get nourishDesc => 'Your body needs energy to process big feelings. A gentle snack is self-love.';
+  String get nourishDesc =>
+      'Your body needs energy to process big feelings. A gentle snack is self-love.';
 
   @override
   String get rest => 'Rest';
 
   @override
-  String get restDesc => 'It is okay to hit the pause button. Recovery requires quiet moments.';
+  String get restDesc =>
+      'It is okay to hit the pause button. Recovery requires quiet moments.';
 
   @override
   String get breathe => 'Breathe';
 
   @override
-  String get breatheDesc => 'Take one deep breath, just for you. Let the air ground you.';
+  String get breatheDesc =>
+      'Take one deep breath, just for you. Let the air ground you.';
 
   @override
   String get journal => 'Journal';
@@ -110,7 +114,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loadingThought => 'Loading a new thought...';
 
   @override
-  String get defaultThought => 'The best way to predict the future is to create it.';
+  String get defaultThought =>
+      'The best way to predict the future is to create it.';
 
   @override
   String get breathingGuide => 'Breathing Guide';
@@ -334,7 +339,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hotlineKiran => 'KIRAN Mental Health Helpline';
 
   @override
-  String get descKiran => '24/7 support for stress, anxiety, depression, suicidal thoughts.';
+  String get descKiran =>
+      '24/7 support for stress, anxiety, depression, suicidal thoughts.';
 
   @override
   String get personKiran => 'Trained Mental Health Counselors';
@@ -343,7 +349,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hotlineVandrevala => 'Vandrevala Foundation Helpline';
 
   @override
-  String get descVandrevala => 'Support for emotional distress, depression, suicidal thoughts.';
+  String get descVandrevala =>
+      'Support for emotional distress, depression, suicidal thoughts.';
 
   @override
   String get personVandrevala => 'Counselors at Vandrevala Foundation';
@@ -352,7 +359,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hotlineSnehi => 'Snehi (Delhi-based NGO)';
 
   @override
-  String get descSnehi => 'Emotional support for suicide prevention & crisis intervention.';
+  String get descSnehi =>
+      'Emotional support for suicide prevention & crisis intervention.';
 
   @override
   String get personSnehi => 'Snehi Volunteer Counselors';
@@ -388,7 +396,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionDenied => 'Permission denied';
 
   @override
-  String get emptyEntryError => 'Please write, record, or add an image before saving.';
+  String get emptyEntryError =>
+      'Please write, record, or add an image before saving.';
 
   @override
   String get noEntriesYet => 'No entries yet.\nStart your journey today!';
@@ -442,58 +451,75 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moodPulseTitle => 'Mood Pulse';
 
   @override
-  String get defaultFeedback => 'Move the sliders to show how you\'re feeling right now.';
+  String get defaultFeedback =>
+      'Move the sliders to show how you\'re feeling right now.';
 
   @override
   String get defaultAdvice => 'We can take it one step at a time.';
 
   @override
-  String get feedbackOverwhelmed => 'Everything feels loud and blurry right now. It\'s high-intensity chaos.';
+  String get feedbackOverwhelmed =>
+      'Everything feels loud and blurry right now. It\'s high-intensity chaos.';
 
   @override
-  String get adviceGrounding => 'Advice: Your only job right now is to breathe. Try the 5-4-3-2-1 grounding technique: name 5 things you see, 4 things you can touch.';
+  String get adviceGrounding =>
+      'Advice: Your only job right now is to breathe. Try the 5-4-3-2-1 grounding technique: name 5 things you see, 4 things you can touch.';
 
   @override
-  String get feedbackSharp => 'You\'re feeling a sharp, clear sense of distress or frustration.';
+  String get feedbackSharp =>
+      'You\'re feeling a sharp, clear sense of distress or frustration.';
 
   @override
-  String get adviceExitEnergy => 'Advice: This energy needs an exit. Try a \'cold water shock\' on your face or a quick, vigorous movement to reset your nervous system.';
+  String get adviceExitEnergy =>
+      'Advice: This energy needs an exit. Try a \'cold water shock\' on your face or a quick, vigorous movement to reset your nervous system.';
 
   @override
-  String get feedbackHeavy => 'You\'re carrying a heavy, foggy weight. It feels hard to even identify the \'why\'.';
+  String get feedbackHeavy =>
+      'You\'re carrying a heavy, foggy weight. It feels hard to even identify the \'why\'.';
 
   @override
-  String get adviceComfort => 'Advice: Don\'t fight the fog. Just focus on small comforts—a warm drink, a soft blanket, or dimming the lights.';
+  String get adviceComfort =>
+      'Advice: Don\'t fight the fog. Just focus on small comforts—a warm drink, a soft blanket, or dimming the lights.';
 
   @override
-  String get feedbackSadness => 'There is a quiet, clear sadness or disappointment present.';
+  String get feedbackSadness =>
+      'There is a quiet, clear sadness or disappointment present.';
 
   @override
-  String get adviceValidate => 'Advice: It\'s okay to sit with this. Try writing down just three words that describe this weight. Validating it helps it pass.';
+  String get adviceValidate =>
+      'Advice: It\'s okay to sit with this. Try writing down just three words that describe this weight. Validating it helps it pass.';
 
   @override
-  String get feedbackHaze => 'You\'re in a bit of a mental haze. Things feel a bit disconnected.';
+  String get feedbackHaze =>
+      'You\'re in a bit of a mental haze. Things feel a bit disconnected.';
 
   @override
-  String get adviceDigitalFast => 'Advice: Your brain might be overstimulated. Try a 10-minute \'digital fast\'—put the phone away and look at something distant out a window.';
+  String get adviceDigitalFast =>
+      'Advice: Your brain might be overstimulated. Try a 10-minute \'digital fast\'—put the phone away and look at something distant out a window.';
 
   @override
-  String get feedbackFlow => 'You\'re in a beautiful state of flow and clarity.';
+  String get feedbackFlow =>
+      'You\'re in a beautiful state of flow and clarity.';
 
   @override
-  String get adviceCreativity => 'Advice: This is a great time for creativity or connection. Carry this light with you into your next task.';
+  String get adviceCreativity =>
+      'Advice: This is a great time for creativity or connection. Carry this light with you into your next task.';
 
   @override
-  String get feedbackDreamy => 'You\'re feeling a gentle, dreamy kind of happiness.';
+  String get feedbackDreamy =>
+      'You\'re feeling a gentle, dreamy kind of happiness.';
 
   @override
-  String get adviceDaydream => 'Advice: Let yourself daydream. You don\'t need to be productive right now. Just enjoy the warmth.';
+  String get adviceDaydream =>
+      'Advice: Let yourself daydream. You don\'t need to be productive right now. Just enjoy the warmth.';
 
   @override
-  String get feedbackBalanced => 'You\'re finding your balance in a steady, middle space.';
+  String get feedbackBalanced =>
+      'You\'re finding your balance in a steady, middle space.';
 
   @override
-  String get adviceCheckBody => 'Advice: Keep checking in with your body. Notice if your shoulders are tense and let them drop.';
+  String get adviceCheckBody =>
+      'Advice: Keep checking in with your body. Notice if your shoulders are tense and let them drop.';
 
   @override
   String get labelFoggy => 'Foggy';
@@ -544,7 +570,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteThreadTitle => 'Delete Thread?';
 
   @override
-  String get deleteThreadContent => 'This will permanently remove this conversation.';
+  String get deleteThreadContent =>
+      'This will permanently remove this conversation.';
 
   @override
   String get cancel => 'Cancel';

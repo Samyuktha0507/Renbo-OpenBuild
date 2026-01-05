@@ -56,25 +56,29 @@ class AppLocalizationsHi extends AppLocalizations {
   String get hydrate => 'हाइड्रेट';
 
   @override
-  String get hydrateDesc => 'पानी लचीलेपन का ईंधन है। एक छोटा घूंट भी धुंध को साफ करने में मदद कर सकता है।';
+  String get hydrateDesc =>
+      'पानी लचीलेपन का ईंधन है। एक छोटा घूंट भी धुंध को साफ करने में मदद कर सकता है।';
 
   @override
   String get nourish => 'पोषण';
 
   @override
-  String get nourishDesc => 'आपकी भावनाओं को संसाधित करने के लिए शरीर को ऊर्जा की आवश्यकता है।';
+  String get nourishDesc =>
+      'आपकी भावनाओं को संसाधित करने के लिए शरीर को ऊर्जा की आवश्यकता है।';
 
   @override
   String get rest => 'आराम';
 
   @override
-  String get restDesc => 'रुकना ठीक है। रिकवरी के लिए शांत पलों की आवश्यकता होती है।';
+  String get restDesc =>
+      'रुकना ठीक है। रिकवरी के लिए शांत पलों की आवश्यकता होती है।';
 
   @override
   String get breathe => 'साँस';
 
   @override
-  String get breatheDesc => 'एक गहरी साँस लें, बस अपने लिए। हवा को आपको स्थिर करने दें।';
+  String get breatheDesc =>
+      'एक गहरी साँस लें, बस अपने लिए। हवा को आपको स्थिर करने दें।';
 
   @override
   String get journal => 'डायरी';
@@ -110,7 +114,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get loadingThought => 'नया विचार लोड हो रहा है...';
 
   @override
-  String get defaultThought => 'भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका इसे बनाना है।';
+  String get defaultThought =>
+      'भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका इसे बनाना है।';
 
   @override
   String get breathingGuide => 'श्वास गाइड';
@@ -388,13 +393,16 @@ class AppLocalizationsHi extends AppLocalizations {
   String get permissionDenied => 'अनुमति अस्वीकृत';
 
   @override
-  String get emptyEntryError => 'सहेजने से पहले कृपया लिखें, रिकॉर्ड करें या छवि जोड़ें।';
+  String get emptyEntryError =>
+      'सहेजने से पहले कृपया लिखें, रिकॉर्ड करें या छवि जोड़ें।';
 
   @override
-  String get noEntriesYet => 'अभी कोई प्रविष्टि नहीं है।\nआज ही अपनी यात्रा शुरू करें!';
+  String get noEntriesYet =>
+      'अभी कोई प्रविष्टि नहीं है।\nआज ही अपनी यात्रा शुरू करें!';
 
   @override
-  String get noEntriesForDay => 'इस दिन के लिए कोई प्रविष्टि नहीं।\nलिखने के लिए यहाँ टैप करें!';
+  String get noEntriesForDay =>
+      'इस दिन के लिए कोई प्रविष्टि नहीं।\nलिखने के लिए यहाँ टैप करें!';
 
   @override
   String get monthLabel => 'महीना';
@@ -442,58 +450,73 @@ class AppLocalizationsHi extends AppLocalizations {
   String get moodPulseTitle => 'मूड पल्स';
 
   @override
-  String get defaultFeedback => 'यह दिखाने के लिए स्लाइडर्स ले जाएं कि आप कैसा महसूस कर रहे हैं।';
+  String get defaultFeedback =>
+      'यह दिखाने के लिए स्लाइडर्स ले जाएं कि आप कैसा महसूस कर रहे हैं।';
 
   @override
   String get defaultAdvice => 'हम इसे एक समय में एक कदम उठा सकते हैं।';
 
   @override
-  String get feedbackOverwhelmed => 'सब कुछ तेज और धुंधला लगता है। यह उच्च तीव्रता वाली अराजकता है।';
+  String get feedbackOverwhelmed =>
+      'सब कुछ तेज और धुंधला लगता है। यह उच्च तीव्रता वाली अराजकता है।';
 
   @override
-  String get adviceGrounding => 'सलाह: आपका काम अभी सिर्फ साँस लेना है। 5-4-3-2-1 तकनीक का प्रयास करें।';
+  String get adviceGrounding =>
+      'सलाह: आपका काम अभी सिर्फ साँस लेना है। 5-4-3-2-1 तकनीक का प्रयास करें।';
 
   @override
-  String get feedbackSharp => 'आप एक तेज, स्पष्ट संकट या निराशा महसूस कर रहे हैं।';
+  String get feedbackSharp =>
+      'आप एक तेज, स्पष्ट संकट या निराशा महसूस कर रहे हैं।';
 
   @override
-  String get adviceExitEnergy => 'सलाह: इस ऊर्जा को बाहर निकलने की जरूरत है। अपना चेहरा ठंडे पानी से धोएं।';
+  String get adviceExitEnergy =>
+      'सलाह: इस ऊर्जा को बाहर निकलने की जरूरत है। अपना चेहरा ठंडे पानी से धोएं।';
 
   @override
-  String get feedbackHeavy => 'आप एक भारी, धुंधला बोझ उठा रहे हैं। \'क्यों\' की पहचान करना भी कठिन है।';
+  String get feedbackHeavy =>
+      'आप एक भारी, धुंधला बोझ उठा रहे हैं। \'क्यों\' की पहचान करना भी कठिन है।';
 
   @override
-  String get adviceComfort => 'सलाह: कोहरे से मत लड़ो। छोटे सुखों पर ध्यान दें - एक गर्म पेय या नरम कंबल।';
+  String get adviceComfort =>
+      'सलाह: कोहरे से मत लड़ो। छोटे सुखों पर ध्यान दें - एक गर्म पेय या नरम कंबल।';
 
   @override
   String get feedbackSadness => 'एक शांत, स्पष्ट उदासी मौजूद है।';
 
   @override
-  String get adviceValidate => 'सलाह: इसके साथ बैठना ठीक है। इस वजन का वर्णन करने वाले तीन शब्द लिखें।';
+  String get adviceValidate =>
+      'सलाह: इसके साथ बैठना ठीक है। इस वजन का वर्णन करने वाले तीन शब्द लिखें।';
 
   @override
-  String get feedbackHaze => 'आप मानसिक धुंध में हैं। चीजें थोड़ी अलग-थलग महसूस होती हैं।';
+  String get feedbackHaze =>
+      'आप मानसिक धुंध में हैं। चीजें थोड़ी अलग-थलग महसूस होती हैं।';
 
   @override
-  String get adviceDigitalFast => 'सलाह: आपका दिमाग उत्तेजित हो सकता है। 10 मिनट का \'डिजिटल उपवास\' करें।';
+  String get adviceDigitalFast =>
+      'सलाह: आपका दिमाग उत्तेजित हो सकता है। 10 मिनट का \'डिजिटल उपवास\' करें।';
 
   @override
   String get feedbackFlow => 'आप प्रवाह और स्पष्टता की सुंदर स्थिति में हैं।';
 
   @override
-  String get adviceCreativity => 'सलाह: यह रचनात्मकता का बहुत अच्छा समय है। इस प्रकाश को अपने अगले कार्य में ले जाएं।';
+  String get adviceCreativity =>
+      'सलाह: यह रचनात्मकता का बहुत अच्छा समय है। इस प्रकाश को अपने अगले कार्य में ले जाएं।';
 
   @override
-  String get feedbackDreamy => 'आप एक कोमल, स्वप्निल प्रकार की खुशी महसूस कर रहे हैं।';
+  String get feedbackDreamy =>
+      'आप एक कोमल, स्वप्निल प्रकार की खुशी महसूस कर रहे हैं।';
 
   @override
-  String get adviceDaydream => 'सलाह: खुद को दिवास्वप्न देखने दें। आपको अभी उत्पादक होने की आवश्यकता नहीं है।';
+  String get adviceDaydream =>
+      'सलाह: खुद को दिवास्वप्न देखने दें। आपको अभी उत्पादक होने की आवश्यकता नहीं है।';
 
   @override
-  String get feedbackBalanced => 'आप एक स्थिर, मध्य स्थान में अपना संतुलन पा रहे हैं।';
+  String get feedbackBalanced =>
+      'आप एक स्थिर, मध्य स्थान में अपना संतुलन पा रहे हैं।';
 
   @override
-  String get adviceCheckBody => 'सलाह: अपने शरीर की जाँच करते रहें। यदि आपके कंधे तनाव में हैं तो उन्हें ढीला छोड़ दें।';
+  String get adviceCheckBody =>
+      'सलाह: अपने शरीर की जाँच करते रहें। यदि आपके कंधे तनाव में हैं तो उन्हें ढीला छोड़ दें।';
 
   @override
   String get labelFoggy => 'धुंधला';
@@ -618,5 +641,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get add => 'जोड़ें';
 
   @override
-  String get noGratitudes => 'अभी तक कोई आभार नहीं। इसे तैरते हुए देखने के लिए एक जोड़ें!';
+  String get noGratitudes =>
+      'अभी तक कोई आभार नहीं। इसे तैरते हुए देखने के लिए एक जोड़ें!';
 }

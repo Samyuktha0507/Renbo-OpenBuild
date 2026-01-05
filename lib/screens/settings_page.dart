@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:renbo/providers/locale_provider.dart';
 import 'package:renbo/utils/theme.dart';
 import 'package:renbo/screens/analytics_dashboard.dart';
+import 'package:renbo/screens/about_page.dart'; // Ensure this file exists
 import 'package:renbo/l10n/gen/app_localizations.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -28,7 +29,7 @@ class SettingsPage extends StatelessWidget {
         children: [
           // --- Account Details Section ---
           Text(
-            l10n.accountDetails, // Ensure this key exists in your arb files
+            l10n.accountDetails,
             style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -136,6 +137,38 @@ class SettingsPage extends StatelessWidget {
             ),
           ),
 
+          const SizedBox(height: 32),
+
+          // --- Support / About Section ---
+          Text(
+            "Support", // Fallback if l10n.support isn't defined yet
+            style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryColor),
+          ),
+          const SizedBox(height: 8),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.info_outline_rounded,
+                color: AppTheme.primaryColor),
+            title: const Text(
+              "About Renbo",
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.darkGray),
+            ),
+            subtitle: const Text("Learn more about our mission"),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AboutPage()),
+              );
+            },
+          ),
+
           const SizedBox(height: 48),
 
           // --- Log Out Button ---
@@ -158,6 +191,7 @@ class SettingsPage extends StatelessWidget {
                   side: const BorderSide(color: Colors.redAccent, width: 1)),
             ),
           ),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -209,8 +243,7 @@ class SettingsPage extends StatelessWidget {
       case 'ta':
       case 'te':
         return '🇮🇳';
-      case 'es':
-        return '🇪🇸';
+      // Spanish removed
       default:
         return '🏳️';
     }

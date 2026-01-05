@@ -20,7 +20,6 @@ class LocaleProvider extends ChangeNotifier {
 class L10n {
   static final all = [
     const Locale('en'), // English
-    const Locale('es'), // Spanish
     const Locale('hi'), // Hindi
     const Locale('ta'), // Tamil
     const Locale('te'), // Telugu 🇮🇳
@@ -29,7 +28,6 @@ class L10n {
   static String getLanguageName(String code) {
     switch (code) {
       case 'en': return 'English';
-      case 'es': return 'Español';
       case 'hi': return 'हिंदी (Hindi)';
       case 'ta': return 'தமிழ் (Tamil)';
       case 'te': return 'తెలుగు (Telugu)';
